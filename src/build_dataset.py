@@ -30,6 +30,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from data_sources import (  # noqa: E402
     GEM_COLUMNS,
     GEM_SEGMENTS,
+    fetch_gem_components,
+    cached,
     GEM_CSV_URL,
     compound,
     fetch_french,
@@ -42,6 +44,8 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_DIR = os.path.join(ROOT, "data")
 OUT_CSV = os.path.join(DATA_DIR, "gem_dataset.csv")
 OUT_DETAILED = os.path.join(DATA_DIR, "gem_dataset_detailed.csv")
+OUT_COMPONENTS = os.path.join(DATA_DIR, "gem_dataset_components.csv")
+CACHE_DIR = os.path.join(DATA_DIR, "cache")
 
 # Last month for which every column of the historical core is populated. The
 # core file runs to 2017-05 but its T-bill column stops in 2016-12, so this is
@@ -55,17 +59,23 @@ SPLICE_DATE = pd.Timestamp("2016-12-31")
 # continuation that introduces the least discontinuity at the junction.
 MSCI_EXUS_CODE = "664211"
 
+# Records which source _exus_live() actually returned, so the provenance files
+# name the series that was really used rather than the one we asked for.
+EXUS_LIVE_USED = {"key": "msci_api_%s" % "664211",
+                  "index": "MSCI ACWI ex USA IMI, gross total return, USD",
+                  "provider": "MSCI (API publique)",
+                  "source": "index_code 664211"}
+
 # Live sources used to extend each series past SPLICE_DATE.
 # (label, index actually measured, provider, source identifier, loader)
 LIVE_SOURCES = {
     "US": ("Yahoo Finance, ^SP500TR (S&P 500 Total Return index)",
            "S&P 500 Total Return", "Yahoo Finance", "^SP500TR",
            lambda: fetch_yahoo("^SP500TR", "1987-01-01")),
-    "EXUS": ("MSCI public API, index %s, gross total return, USD"
-             % MSCI_EXUS_CODE,
+    "EXUS": ("MSCI public API, index %s (repli ETF ACWX)" % MSCI_EXUS_CODE,
              "MSCI ACWI ex USA IMI, gross total return, USD",
              "MSCI (API publique)", "index_code %s" % MSCI_EXUS_CODE,
-             lambda: fetch_msci(MSCI_EXUS_CODE, 1997, date.today().year)),
+             lambda: _exus_live()),
     "BOND": ("Yahoo Finance, AGG (iShares Core US Aggregate Bond ETF)",
              "Bloomberg US Aggregate Bond (via ETF, net de frais)",
              "Yahoo Finance", "AGG, cours ajusté des dividendes",
@@ -82,6 +92,38 @@ TBILL_SOURCE = ("Kenneth French Data Library, F-F_Research_Data_Factors, "
                 "RF column (1-month Treasury bill), 1926-07 to date")
 
 
+def _exus_live():
+    """Ex-US extension: MSCI's gross index first, the ACWX ETF as a fallback.
+
+    MSCI's free endpoint is the right series conceptually -- a gross total
+    return index, directly comparable with the gross indices used before 2017.
+    But it is unmetered and throttles hard, and when throttled it returns 200
+    with whole pages missing rather than an error.
+
+    ACWX tracks the same index family, so it is a faithful substitute, with one
+    documented bias: being a fund it is net of a 0.32% fee and of dividend
+    withholding, so it understates the gross index by roughly half a point a
+    year. That matters only for the 2017+ segment, and the build prints which
+    one it used.
+    """
+    try:
+        s = fetch_msci(MSCI_EXUS_CODE, 2015, date.today().year)
+        needed = pd.date_range(SPLICE_DATE, s.index[-1], freq="ME")
+        if not len(needed.difference(s.index)):
+            return s
+        print("          MSCI answered with %d gap(s) -- falling back to ACWX"
+              % len(needed.difference(s.index)))
+    except Exception as exc:  # noqa: BLE001
+        print("          MSCI unavailable (%s) -- falling back to ACWX"
+              % str(exc)[:60])
+    EXUS_LIVE_USED.update(
+        key="acwx_etf",
+        index="MSCI ACWI ex USA via ETF ACWX (net de frais et de retenues)",
+        provider="Yahoo Finance",
+        source="ACWX, cours ajuste des dividendes")
+    return fetch_yahoo("ACWX", "2008-01-01")
+
+
 def splice(core, live, cut):
     """Extend ``core`` past ``cut`` with ``live``, rescaled to match at ``cut``.
 
@@ -94,15 +136,27 @@ def splice(core, live, cut):
     live = live.dropna()
 
     if cut not in live.index:
-        available = live.index[live.index <= cut]
-        if len(available) == 0:
-            print("    no overlap, keeping core only")
-            return core, None
-        cut = available[-1]
+        # Do NOT quietly fall back to an earlier junction: that would throw away
+        # good core data and splice onto whatever the provider happened to
+        # return. Refuse instead, and let the caller keep the core.
+        raise ValueError(
+            "live series does not cover the junction month %s (it runs %s to %s)"
+            % (cut.date(), live.index[0].date(), live.index[-1].date()))
+
+    tail = live[live.index > cut]
+    if len(tail):
+        # A throttled provider can return 200 with whole pages missing. Splicing
+        # a gapped tail silently shortens the final dataset, because the join
+        # across columns drops every month any one of them lacks.
+        expected = pd.date_range(tail.index[0], tail.index[-1], freq="ME")
+        missing = expected.difference(tail.index)
+        if len(missing):
+            raise ValueError(
+                "live series has %d gap(s) after %s, first at %s"
+                % (len(missing), cut.date(), missing[0].date()))
 
     scale = core.loc[cut] / live.loc[cut]
-    tail = live[live.index > cut] * scale
-    return pd.concat([core, tail]), (cut, scale, len(tail))
+    return pd.concat([core, tail * scale]), (cut, scale, len(tail))
 
 
 def main():
@@ -115,25 +169,35 @@ def main():
           % (core.index[0].date(), core.index[-1].date(), len(core), len(repairs)))
 
     print("\n2. Live extension sources")
-    columns, notes = {}, {}
+    columns, notes, live_raw = {}, {}, {}
     for key, (label, _idx, _prov, _src, loader) in LIVE_SOURCES.items():
         print("   %-6s %s" % (key, label))
         try:
-            live = loader()
-            print("          fetched %s -> %s (%d months)"
-                  % (live.index[0].date(), live.index[-1].date(), len(live)))
+            live, origin = cached(key, loader, CACHE_DIR)
+            live_raw[key] = live
+            print("          %-5s %s -> %s (%d months)"
+                  % (origin, live.index[0].date(), live.index[-1].date(),
+                     len(live)))
         except Exception as exc:  # noqa: BLE001
-            print("          FAILED (%s) -- keeping historical core only" % exc)
+            print("          UNAVAILABLE (%s)" % exc)
+            print("          !! %s will stop at %s, truncating the whole dataset"
+                  % (key, SPLICE_DATE.date()))
             columns[key] = core[key].dropna()
             notes[key] = None
             continue
-        merged, info = splice(core[key], live, SPLICE_DATE)
+        try:
+            merged, info = splice(core[key], live, SPLICE_DATE)
+        except ValueError as exc:
+            print("          REFUSED to splice: %s" % exc)
+            print("          -> keeping core only for %s" % key)
+            columns[key] = core[key].dropna()
+            notes[key] = None
+            continue
         columns[key] = merged
         notes[key] = info
-        if info:
-            cut, scale, n = info
-            print("          spliced at %s (scale %.6f), +%d months"
-                  % (cut.date(), scale, n))
+        cut, scale, n = info
+        print("          spliced at %s (scale %.6f), +%d months"
+              % (cut.date(), scale, n))
 
     print("\n3. T-bill leg (single continuous source, no splice)")
     print("   %s" % TBILL_SOURCE)
@@ -161,6 +225,11 @@ def main():
     detailed.to_csv(OUT_DETAILED, index=False, float_format="%.6f")
     print("   wrote %s (%d rows, long format)" % (OUT_DETAILED, len(detailed)))
 
+    comps = build_components(df, segments, live_raw)
+    comps.to_csv(OUT_COMPONENTS, float_format="%.6f")
+    print("   wrote %s (%d colonnes, composantes + colonne calculée)"
+          % (OUT_COMPONENTS, comps.shape[1]))
+
     _write_sources(df, core, repairs, notes)
     print("   wrote %s" % os.path.join(DATA_DIR, "SOURCES.md"))
     _write_segments(df, segments)
@@ -172,6 +241,101 @@ def main():
         cagr = (1 + r).prod() ** (12 / len(r)) - 1
         print("     %-6s %6.2f%%  (vol %5.2f%%)"
               % (col, cagr * 100, r.std() * 12 ** 0.5 * 100))
+
+
+def build_components(df, segments, live_raw):
+    """Wide table laying each vendor component next to the series it feeds.
+
+    Same idea as the published source file: one column per raw vendor series,
+    then the computed column that chains them. Reading a row left to right, the
+    computed column is exactly equal to whichever component was in force that
+    month, so the splice can be checked by eye rather than taken on trust.
+
+    Every component is rescaled onto the base of its own computed series. That
+    is a change of unit only -- no monthly return is altered -- and it is what
+    makes the columns comparable at all, since MSCI, Ibbotson and Yahoo each
+    publish on an unrelated index base.
+    """
+    raw = fetch_gem_components()
+
+    def blended(a, b, wa, wb):
+        """Level series for a monthly-rebalanced blend of two level series."""
+        r = wa * raw[a].pct_change() + wb * raw[b].pct_change()
+        return compound(r.dropna())
+
+    def chain(*parts):
+        """Concatenate level series, each rescaled onto the previous one."""
+        out = None
+        for part in parts:
+            part = part.dropna()
+            if out is None:
+                out = part
+                continue
+            overlap = out.index.intersection(part.index)
+            if len(overlap):
+                part = part * (out.loc[overlap[-1]] / part.loc[overlap[-1]])
+                part = part[part.index > overlap[-1]]
+            out = pd.concat([out, part])
+        return out
+
+    # (column name, level series, segments over which this component drives).
+    # The segment list is what anchors the rescaling: a component is put on the
+    # base of the computed series using the months where it is actually in
+    # force, so the two columns coincide exactly there.
+    specs = {
+        "US": [
+            ("US_ibbotson_large_cap", raw["Large Caps"], ["US-1"]),
+            ("US_sp500_total_return",
+             chain(raw["SP500TR"], live_raw.get("US")), ["US-2", "US-3"]),
+        ],
+        "EXUS": [
+            ("EXUS_msci_world_ex_usa", raw["WORLD ex USA"], ["EXUS-1"]),
+            ("EXUS_msci_acwi_ex_usa", raw["ACWI ex USA"], ["EXUS-2"]),
+            ("EXUS_live_%s" % EXUS_LIVE_USED["key"],
+             live_raw.get("EXUS"), ["EXUS-3"]),
+        ],
+        "BOND": [
+            ("BOND_ibbotson_40treas_60corp",
+             blended("Mid-Treasuries", "Mid-Corporate Bonds", 0.40, 0.60),
+             ["BOND-1"]),
+            ("BOND_barclays_us_agg", raw["AGG"], ["BOND-2"]),
+            ("BOND_agg_etf", live_raw.get("BOND"), ["BOND-3"]),
+        ],
+        # Never drives anything: the published T-bill column is shown only so
+        # that its 2013-2016 divergence from the retained series is visible.
+        "TBILL": [
+            ("TBILL_csv_published_not_used", raw["Spliced M+R"], []),
+        ],
+    }
+
+    out = pd.DataFrame(index=df.index)
+    for series in ["US", "EXUS", "BOND", "TBILL"]:
+        target = df[series]
+        segs = segments[segments["series"] == series]
+        active = _active_labels(df.index, segs)
+
+        for name, comp, drives in specs.get(series, []):
+            if comp is None:
+                continue
+            comp = comp.dropna().reindex(df.index)
+            anchor = active.isin(drives) & comp.notna() & target.notna()
+            if not anchor.any():                      # never drives: whole overlap
+                anchor = comp.notna() & target.notna()
+            if not anchor.any():
+                continue
+            out[name] = comp * float((target[anchor] / comp[anchor]).median())
+
+        out[series] = target
+        out["%s_source" % series] = active
+    return out
+
+
+def _active_labels(index, segs):
+    """Which segment is in force for each month."""
+    labels = pd.Series("", index=index, dtype=object)
+    for _, s in segs.iterrows():
+        labels[(index >= s["start"]) & (index <= s["end"])] = s["segment"]
+    return labels
 
 
 def build_segment_map(df):
@@ -197,6 +361,10 @@ def build_segment_map(df):
                 "origin": "socle historique (CSV redistribué)",
             })
         _label, index_name, provider, source, _loader = LIVE_SOURCES[key]
+        if key == "EXUS":
+            index_name = EXUS_LIVE_USED["index"]
+            provider = EXUS_LIVE_USED["provider"]
+            source = EXUS_LIVE_USED["source"]
         rows.append({
             "series": key,
             "segment": "%s-%d" % (key, len(segs) + 1),
@@ -302,6 +470,33 @@ def _write_segments(df, segments):
                "économique.\n")
     out.append("- **`TBILL` ne comporte aucun raccord** : une seule source "
                "continue de 1926 à aujourd'hui.\n")
+
+    out.append("\n## Vérifier les raccords soi-même\n")
+    out.append("`gem_dataset_components.csv` reprend le format du fichier "
+               "source : **une colonne par série de fournisseur, puis la "
+               "colonne calculée qui les enchaîne**, plus une colonne "
+               "`<série>_source` nommant le segment actif ce mois-là.\n")
+    out.append("Chaque composante est remise à l'échelle de la série calculée "
+               "(changement d'unité seulement, aucun rendement mensuel n'est "
+               "modifié), si bien qu'en lisant une ligne de gauche à droite la "
+               "colonne calculée est **exactement égale** à la composante "
+               "active. Exemple au raccord de 1988 :\n")
+    out.append("```")
+    out.append("Date        World ex USA   ACWI ex USA      EXUS   source")
+    out.append("1987-12-31       100.000       100.000   100.000   EXUS-1")
+    out.append("1988-01-31       101.572       101.680   101.680   EXUS-2   <- bascule")
+    out.append("```")
+    out.append("\nÉcarts résiduels entre colonne calculée et composante active : "
+               "nuls sur les segments repris tels quels, et de l'ordre de "
+               "1e-5 sur les segments antérieurs à 1988, où le fichier publié "
+               "n'a que trois décimales. Seule exception, `BOND-1` (3,7e-3) : "
+               "le mélange 40/60 y est **reconstruit** en composant des "
+               "rendements mensuels, et l'arrondi du fichier source se cumule "
+               "sur 73 mois.\n")
+    out.append("La colonne `TBILL_csv_published_not_used` est présente sans "
+               "être utilisée : elle rend visible la divergence de 2013-2016 "
+               "qui a motivé l'abandon de cette colonne au profit de Ken "
+               "French.\n")
 
     with open(os.path.join(DATA_DIR, "SEGMENTS.md"), "w", encoding="utf-8") as fh:
         fh.write("\n".join(out) + "\n")

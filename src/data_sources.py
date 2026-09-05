@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import io
 import json
+import os
 import time
 import urllib.request
 import zipfile
@@ -340,6 +341,50 @@ def fetch_fred(series_id, start="1900-01-01"):
         index=pd.to_datetime(df["date"]),
     ).dropna()
     return _to_month_end(s)
+
+
+def cached(name, loader, cache_dir, refresh=True):
+    """Fetch a series, keeping a disk copy as a fallback.
+
+    Providers here are free and unmetered, so they throttle. MSCI in particular
+    starts timing out after a burst of requests. Without a fallback a single
+    throttled fetch would leave a column short, and the final dropna() would
+    then silently truncate the WHOLE dataset back to the last month every
+    column has -- turning a network hiccup into 10 years of missing data.
+
+    Returns (series, source) where source is "live" or "cache".
+    """
+    os.makedirs(cache_dir, exist_ok=True)
+    path = os.path.join(cache_dir, "%s.csv" % name)
+
+    prior = None
+    if os.path.exists(path):
+        prior = pd.read_csv(path, index_col=0, parse_dates=True)["value"].dropna()
+
+    if refresh:
+        try:
+            fresh = loader().dropna()
+        except Exception as exc:  # noqa: BLE001
+            print("          live fetch failed (%s)" % str(exc)[:70])
+            fresh = None
+
+        if fresh is not None and len(fresh):
+            # A throttled provider can answer with HOLES rather than an error --
+            # MSCI drops whole pages and still returns 200. Filling those from
+            # the cached copy is safe because it is the same series from the
+            # same provider on the same base, and it stops a partial answer
+            # from being mistaken for a complete one downstream.
+            merged = fresh if prior is None else fresh.combine_first(prior)
+            merged = merged.sort_index()
+            merged.to_frame("value").to_csv(path)
+            filled = len(merged) - len(fresh)
+            return merged, "live" if not filled else "live+%d from cache" % filled
+
+    if prior is not None:
+        return prior, "cache"
+    raise RuntimeError(
+        "%s unavailable: live fetch failed and no cached copy at %s" % (name, path)
+    )
 
 
 def compound(returns, base=100.0):

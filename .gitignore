@@ -4,3 +4,6 @@ output/run_log.txt
 
 # Articles tiers sous copyright, conserves en local uniquement
 *.pdf
+
+# Cache des sources live (regenerable)
+data/cache/

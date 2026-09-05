@@ -26,6 +26,8 @@ src/gem_backtest.py      Backtest, tables et figures
 
 data/gem_dataset.csv          Jeu maître FORMAT LARGE, 4 séries — entrée du backtest (généré)
 data/gem_dataset_detailed.csv Format long, une ligne par (date, série) avec sa provenance (généré)
+data/gem_dataset_components.csv Format large : composantes brutes + colonne calculée (généré)
+data/cache/                   Copies disque des sources live, filet de sécurité (non versionné)
 data/SEGMENTS.md              Carte de provenance segment par segment (généré)
 data/SOURCES.md               Provenance globale, à citer dans le paper (généré)
 data/VALIDATION.md            Rapport d'audit des données (généré)
@@ -59,11 +61,20 @@ de 1969-12 à aujourd'hui :
 | `BOND` | Obligations agrégées US (Ibbotson gov/corp → Bloomberg Barclays US Agg) |
 | `TBILL` | T-bills 1 mois (Ken French, source unique continue depuis 1926) |
 
-**Deux fichiers, deux usages.** `gem_dataset.csv` est l'entrée du code : schéma
+**Trois fichiers, trois usages.** `gem_dataset.csv` est l'entrée du code : schéma
 large stable, 4 colonnes, rien d'autre. `gem_dataset_detailed.csv` est la version
 documentaire : format long, avec pour chaque mois l'indice réellement mesuré, le
-fournisseur, le segment et un drapeau `repaired`. Ne jamais faire lire le fichier
-détaillé au backtest — il changerait de schéma à chaque ajout de métadonnée.
+fournisseur, le segment et un drapeau `repaired`. `gem_dataset_components.csv`
+reprend le format du fichier source : une colonne par série de fournisseur, puis
+la colonne calculée qui les enchaîne, chaque composante étant remise à l'échelle
+de la série calculée pour que la bascule se vérifie à l'œil sur une ligne. Ne
+jamais faire lire l'un de ces deux fichiers au backtest — leur schéma change à
+chaque ajout de métadonnée.
+
+Si une source live est indisponible, `cached()` retombe sur `data/cache/`. Sans
+ce filet, un simple timeout laisserait une colonne courte et le `dropna()` final
+tronquerait **tout** le dataset à 2016 — un incident réseau se transformerait en
+dix ans de données manquantes.
 
 Les bornes de raccord de `SEGMENTS.md` ne sont pas reprises d'une documentation :
 elles sont **retrouvées dans le fichier source** par recherche de la plage où le
@@ -114,6 +125,11 @@ production ne sont pas touchées, mais le fichier détaillé les utilise.
   cas la connexion est acceptée puis jamais servie : ça ressemble à une panne
   réseau, pas à un refus.
 - Stooq (challenge JS) et Investing.com (403) sont inutilisables en script.
+- **L'API MSCI throttle et renvoie alors 200 avec des pages manquantes**, pas une
+  erreur. `_exus_live()` détecte les trous et bascule sur l'ETF ACWX ; `cached()`
+  rebouche depuis le disque ; `splice()` **refuse** un raccord troué au lieu de
+  reculer la jonction. Sans ces trois garde-fous un simple throttling produisait
+  un dataset de 632 mois au lieu de 680, sans le moindre message.
 
 ## Conventions
 
@@ -137,17 +153,17 @@ de plus de ~0,1 point doit être expliqué.
 
 | | CAGR | Vol | Sharpe | MaxDD |
 |---|---:|---:|---:|---:|
-| GEM | 15,18 % | 12,91 % | 0,83 | −21,66 % |
+| GEM | 15,17 % | 12,81 % | 0,84 | −19,60 % |
 | S&P 500 | 11,27 % | 15,20 % | 0,50 | −50,95 % |
 
-Alpha annualisé 6,61 % (t = 4,31 Newey-West), bêta 0,57, R² 0,45.
+Alpha annualisé 6,63 % (t = 4,34 Newey-West), bêta 0,57, R² 0,45.
 Décomposition d'Antonacci : momentum absolu seul +77 bps, relatif seul +203 bps,
-combiné +391 bps — les deux briques ne s'additionnent pas, ce qui est le point
+combiné +390 bps — les deux briques ne s'additionnent pas, ce qui est le point
 central de l'article original.
 
 Effet allocation contre effet timing (table 2b) : le mix statique portant la même
-allocation moyenne que GEM (46/28/25, figé, rebalancé mensuellement) fait 10,03 %,
-soit **124 bps de MOINS que le S&P 500**. Le panier d'actifs est donc un handicap
+allocation moyenne que GEM (47/28/25, figé, rebalancé mensuellement) fait 10,01 %,
+soit **127 bps de MOINS que le S&P 500**. Le panier d'actifs est donc un handicap
 sur la période — hors US et obligations ont sous-performé les actions US. La
 totalité des +391 bps vient du timing, qui doit d'abord effacer ce handicap
 (+515 bps bruts). Le drawdown, lui, se partage : −9,0 pt dus à l'allocation,

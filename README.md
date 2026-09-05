@@ -18,17 +18,17 @@ sinon:
 
 | | CAGR | Volatilité | Sharpe | Max drawdown |
 |---|---:|---:|---:|---:|
-| **GEM** | **15,18 %** | 12,91 % | **0,83** | **−21,66 %** |
+| **GEM** | **15,17 %** | 12,81 % | **0,84** | **−19,60 %** |
 | S&P 500 | 11,27 % | 15,20 % | 0,50 | −50,95 % |
 
-Alpha annualisé 6,61 % (t = 4,31, erreurs-types Newey-West), bêta 0,57, R² 0,45.
+Alpha annualisé 6,63 % (t = 4,34, erreurs-types Newey-West), bêta 0,57, R² 0,45.
 
 **Décomposition** — les deux briques ne s'additionnent pas : momentum absolu seul
-+77 bps, relatif seul +203 bps, combiné **+391 bps**.
++77 bps, relatif seul +203 bps, combiné **+390 bps**.
 
 **Allocation contre timing** : un portefeuille statique portant la même allocation
-moyenne que GEM (46 % US / 28 % hors US / 25 % obligations, rebalancé chaque mois)
-rend 10,03 % — soit 124 bps de *moins* que le S&P 500. Le panier d'actifs est donc
+moyenne que GEM (47 % US / 28 % hors US / 25 % obligations, rebalancé chaque mois)
+rend 10,01 % — soit 127 bps de *moins* que le S&P 500. Le panier d'actifs est donc
 un handicap sur la période ; l'intégralité de la surperformance vient du timing.
 
 **Réserve principale** : toute la surperformance vient de 1971-2009 (+7,7 pt/an).

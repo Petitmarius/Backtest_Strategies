@@ -36,8 +36,8 @@ Ce fichier est une **redistribution**, pas une source primaire. Il est audité c
 | Clé | Source | Raccord | Facteur d'échelle | Mois ajoutés |
 |---|---|---|---:|---:|
 | `US` | Yahoo Finance, ^SP500TR (S&P 500 Total Return index) | 2016-12-31 | 1.000000 | 117 |
-| `EXUS` | MSCI public API, index 664211, gross total return, USD | 2016-12-31 | 0.471889 | 116 |
-| `BOND` | Yahoo Finance, AGG (iShares Core US Aggregate Bond ETF) | 2016-12-31 | 24.131477 | 117 |
+| `EXUS` | MSCI public API, index 664211 (repli ETF ACWX) | 2016-12-31 | 15.954469 | 117 |
+| `BOND` | Yahoo Finance, AGG (iShares Core US Aggregate Bond ETF) | 2016-12-31 | 24.131474 | 117 |
 
 Le raccord est un **changement de base uniquement** : la série live est multipliée par une constante pour coïncider avec le socle au mois de jonction. Aucun rendement mensuel n'est modifié, ni avant ni après le raccord.
 

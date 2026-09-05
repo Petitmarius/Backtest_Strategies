@@ -21,7 +21,7 @@ Les bornes du socle historique ne sont pas reprises d'une documentation : elles 
 |---|---|---|---:|---|---|---|
 | `EXUS-1` | 1969-12-31 | 1987-12-31 | 217 | MSCI World ex USA, gross total return, USD | MSCI | WORLD ex USA (col. C) |
 | `EXUS-2` | 1988-01-31 | 2016-12-31 | 348 | MSCI ACWI ex USA, gross total return, USD | MSCI | ACWI ex USA (col. D) |
-| `EXUS-3` | 2017-01-31 | 2026-07-31 | 115 | MSCI ACWI ex USA IMI, gross total return, USD | MSCI (API publique) | index_code 664211 |
+| `EXUS-3` | 2017-01-31 | 2026-07-31 | 115 | MSCI ACWI ex USA via ETF ACWX (net de frais et de retenues) | Yahoo Finance | ACWX, cours ajuste des dividendes |
 
 ## `BOND` — Obligations agrégées US
 
@@ -46,4 +46,21 @@ Les bornes du socle historique ne sont pas reprises d'une documentation : elles 
 - **`US` ne change pas d'indice en 2013**, seulement de fournisseur : la série Ibbotson Large Cap et le S&P 500 Total Return mesurent le même indice. Le raccord est sans effet économique.
 
 - **`TBILL` ne comporte aucun raccord** : une seule source continue de 1926 à aujourd'hui.
+
+
+## Vérifier les raccords soi-même
+
+`gem_dataset_components.csv` reprend le format du fichier source : **une colonne par série de fournisseur, puis la colonne calculée qui les enchaîne**, plus une colonne `<série>_source` nommant le segment actif ce mois-là.
+
+Chaque composante est remise à l'échelle de la série calculée (changement d'unité seulement, aucun rendement mensuel n'est modifié), si bien qu'en lisant une ligne de gauche à droite la colonne calculée est **exactement égale** à la composante active. Exemple au raccord de 1988 :
+
+```
+Date        World ex USA   ACWI ex USA      EXUS   source
+1987-12-31       100.000       100.000   100.000   EXUS-1
+1988-01-31       101.572       101.680   101.680   EXUS-2   <- bascule
+```
+
+Écarts résiduels entre colonne calculée et composante active : nuls sur les segments repris tels quels, et de l'ordre de 1e-5 sur les segments antérieurs à 1988, où le fichier publié n'a que trois décimales. Seule exception, `BOND-1` (3,7e-3) : le mélange 40/60 y est **reconstruit** en composant des rendements mensuels, et l'arrondi du fichier source se cumule sur 73 mois.
+
+La colonne `TBILL_csv_published_not_used` est présente sans être utilisée : elle rend visible la divergence de 2013-2016 qui a motivé l'abandon de cette colonne au profit de Ken French.
 
