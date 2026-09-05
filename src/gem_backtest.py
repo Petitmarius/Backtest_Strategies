@@ -382,13 +382,15 @@ def main():
     gaa = static_mix(prices, {"US": 0.45, "EXUS": 0.28, "BOND": 0.27},
                      index=gem.index)
 
+    # Curves drawn on figure 1. The 60/40 is deliberately absent: it overlaps
+    # the matched static mix almost exactly and only crowds the chart. It stays
+    # in the statistics table.
     curves = {
         "GEM": gem,
         matched_label: matched,
         "S&P 500": bench,
         "Ex-US equity": rets["EXUS"],
         "US bonds": rets["BOND"],
-        "60/40": sixty_forty,
     }
     COLORS[matched_label] = "#6c3483"
 
