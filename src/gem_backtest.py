@@ -204,6 +204,22 @@ def run_rule(prices, decide, lookback=LOOKBACK, cost_bps=COST_BPS):
     return pd.Series(out, index=dates), pd.Series(held, index=dates)
 
 
+def static_mix(prices, weights, index=None):
+    """Fixed-weight portfolio, rebalanced every month.
+
+    The point of this benchmark is to hold GEM's *average* asset mix while doing
+    none of its timing. Whatever it earns is the part of GEM's return that came
+    from simply being diversified across those three assets; the remainder is
+    what the monthly switching actually added.
+    """
+    rets = prices.pct_change()
+    if index is not None:
+        rets = rets.reindex(index)
+    total = float(sum(weights.values()))
+    mix = sum(rets[asset] * (w / total) for asset, w in weights.items())
+    return mix.dropna()
+
+
 def gem_rule(row):
     """Dual momentum: absolute filter, then relative selection."""
     if row["US"] > row["TBILL"]:
@@ -229,8 +245,11 @@ def fig_equity(curves, path):
     fig, ax = plt.subplots(figsize=(9, 5.2))
     for name, r in curves.items():
         equity = 100 * (1 + r).cumprod()
+        emphasis = name == "GEM" or name.startswith("Mix statique")
         ax.plot(equity.index, equity.values, label=name,
-                color=COLORS.get(name), linewidth=1.9 if name == "GEM" else 1.1)
+                color=COLORS.get(name), linewidth=1.9 if name == "GEM"
+                else (1.5 if emphasis else 1.0),
+                zorder=3 if emphasis else 2)
     ax.set_yscale("log")
     ax.set_ylabel("Croissance de 100 USD (échelle log)")
     ax.set_xlabel("")
@@ -349,17 +368,35 @@ def main():
     bench = rets["US"]
     sixty_forty = (0.6 * rets["US"] + 0.4 * rets["BOND"])
 
+    # Static benchmark carrying GEM's own average allocation. Weights are read
+    # off the backtest rather than hard-coded, so they stay correct if the rule,
+    # the lookback or the sample ever changes.
+    shares = held.value_counts(normalize=True)
+    weights = {a: float(shares.get(a, 0.0)) for a in ("US", "EXUS", "BOND")}
+    matched = static_mix(prices, weights, index=gem.index)
+    matched_label = "Mix statique %d/%d/%d" % tuple(
+        round(weights[a] * 100) for a in ("US", "EXUS", "BOND"))
+
+    # Antonacci's own Global Asset Allocation benchmark, for comparability with
+    # the published article.
+    gaa = static_mix(prices, {"US": 0.45, "EXUS": 0.28, "BOND": 0.27},
+                     index=gem.index)
+
     curves = {
         "GEM": gem,
+        matched_label: matched,
         "S&P 500": bench,
         "Ex-US equity": rets["EXUS"],
         "US bonds": rets["BOND"],
         "60/40": sixty_forty,
     }
+    COLORS[matched_label] = "#6c3483"
 
     # ---- table 1: headline stats ---------------------------------------
     stats = pd.concat([
         performance(gem, rf, "GEM"),
+        performance(matched, rf, matched_label),
+        performance(gaa, rf, "GAA 45/28/27"),
         performance(bench, rf, "S&P 500"),
         performance(rets["EXUS"], rf, "Actions hors US"),
         performance(rets["BOND"], rf, "Obligations US"),
@@ -393,6 +430,56 @@ def main():
           % (spread["Momentum absolu seul"], spread["Momentum relatif seul"],
              spread["Momentum absolu seul"] + spread["Momentum relatif seul"],
              spread["GEM (combiné)"]))
+
+    # ---- table 2b: allocation effect vs timing effect ------------------
+    def cagr_of(r):
+        return (1 + r).prod() ** (MONTHS / len(r)) - 1
+
+    c_bench, c_mix, c_gem = cagr_of(bench), cagr_of(matched), cagr_of(gem)
+    timing = pd.DataFrame({
+        "CAGR": [c_bench, c_mix, c_gem],
+        "Volatilité": [bench.std() * np.sqrt(MONTHS),
+                       matched.std() * np.sqrt(MONTHS),
+                       gem.std() * np.sqrt(MONTHS)],
+        "Max drawdown": [drawdown_series(bench).min(),
+                         drawdown_series(matched).min(),
+                         drawdown_series(gem).min()],
+        "Corrélation avec GEM": [bench.corr(gem), matched.corr(gem), 1.0],
+    }, index=["S&P 500", matched_label, "GEM"])
+    timing["Écart vs S&P 500 (bps)"] = (timing["CAGR"] - c_bench) * 10000
+    timing.to_csv(os.path.join(TAB_DIR, "07_allocation_vs_timing.csv"))
+
+    print("\n" + "=" * 88)
+    print("TABLE 2b — Effet allocation contre effet timing")
+    print("=" * 88)
+    show = timing.copy()
+    for c in ["CAGR", "Volatilité", "Max drawdown"]:
+        show[c] = (show[c] * 100).round(2)
+    print(show.round(2).to_string())
+    print("\n  Le mix statique détient la MÊME allocation moyenne que GEM "
+          "(%.0f%% US / %.0f%% hors US / %.0f%% obligations), figée, rebalancée "
+          "chaque mois." % tuple(weights[a] * 100 for a in ("US", "EXUS", "BOND")))
+    alloc_effect = (c_mix - c_bench) * 10000
+    timing_effect = (c_gem - c_mix) * 10000
+    print("  Effet allocation (détenir ce panier, sans timing) : %+.0f bps/an"
+          % alloc_effect)
+    print("  Effet timing (ce qu'ajoute la commutation)        : %+.0f bps/an"
+          % timing_effect)
+    if alloc_effect < 0:
+        print("  -> Le panier d'actifs a COÛTÉ %.0f bps/an sur la période : hors US "
+              "et obligations ont sous-performé les actions US." % -alloc_effect)
+        print("     La totalité de la surperformance de GEM vient donc du timing, "
+              "qui doit d'abord effacer ce handicap.")
+    else:
+        print("  -> %.0f%% de la surperformance vient du timing, %.0f%% du panier."
+              % (timing_effect / (timing_effect + alloc_effect) * 100,
+                 alloc_effect / (timing_effect + alloc_effect) * 100))
+    dd_b, dd_m, dd_g = (drawdown_series(x).min()
+                        for x in (bench, matched, gem))
+    print("  Drawdown : %.1f pt de moins grâce à l'allocation, "
+          "%.1f pt de plus grâce au timing (%.1f%% -> %.1f%% -> %.1f%%)."
+          % ((dd_m - dd_b) * 100, (dd_g - dd_m) * 100,
+             dd_b * 100, dd_m * 100, dd_g * 100))
 
     # ---- table 3: regression vs benchmark ------------------------------
     reg = ols_nw((gem - rf).values, (bench - rf).values)

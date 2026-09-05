@@ -145,6 +145,14 @@ Décomposition d'Antonacci : momentum absolu seul +77 bps, relatif seul +203 bps
 combiné +391 bps — les deux briques ne s'additionnent pas, ce qui est le point
 central de l'article original.
 
+Effet allocation contre effet timing (table 2b) : le mix statique portant la même
+allocation moyenne que GEM (46/28/25, figé, rebalancé mensuellement) fait 10,03 %,
+soit **124 bps de MOINS que le S&P 500**. Le panier d'actifs est donc un handicap
+sur la période — hors US et obligations ont sous-performé les actions US. La
+totalité des +391 bps vient du timing, qui doit d'abord effacer ce handicap
+(+515 bps bruts). Le drawdown, lui, se partage : −9,0 pt dus à l'allocation,
+−20,3 pt de plus dus au timing.
+
 Fait le plus important du backtest : toute la surperformance vient de 1971-2009
 (+7,7 pt/an). Sur 2010-2026 GEM perd 4,8 pt/an. La cause est mesurée : sur cette
 période la règle n'est hors du S&P 500 que 26 % du temps, mais pendant les 21

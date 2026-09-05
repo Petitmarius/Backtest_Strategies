@@ -26,6 +26,11 @@ Alpha annualisé 6,61 % (t = 4,31, erreurs-types Newey-West), bêta 0,57, R² 0,
 **Décomposition** — les deux briques ne s'additionnent pas : momentum absolu seul
 +77 bps, relatif seul +203 bps, combiné **+391 bps**.
 
+**Allocation contre timing** : un portefeuille statique portant la même allocation
+moyenne que GEM (46 % US / 28 % hors US / 25 % obligations, rebalancé chaque mois)
+rend 10,03 % — soit 124 bps de *moins* que le S&P 500. Le panier d'actifs est donc
+un handicap sur la période ; l'intégralité de la surperformance vient du timing.
+
 **Réserve principale** : toute la surperformance vient de 1971-2009 (+7,7 pt/an).
 Sur 2010-2026 GEM perd 4,8 pt/an face au S&P 500.
 
