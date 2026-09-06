@@ -180,6 +180,16 @@ def main():
          ((1 + spx.loc["2022"]).prod() - 1) * 100, -18.1, 0.1),
     ]
 
+    bear = [("1973-01", "1975-06", 83), ("2000-06", "2003-06", 84),
+            ("2007-06", "2009-12", 68)]
+    for lo, hi, expected in bear:
+        window = held.loc[lo:hi]
+        checks.append(("4.3", "in bonds %d%% of %s--%s" % (expected, lo, hi),
+                       (window == "BOND").mean() * 100, expected, 0.6))
+    in_bear = sum((held.loc[lo:hi] == "BOND").sum() for lo, hi, _ in bear)
+    checks.append(("4.3", "those windows are 45% of all bond months",
+                   in_bear / (held == "BOND").sum() * 100, 45, 1))
+
     lookback = {}
     for lb in (3, 6, 9, 12, 15, 18, 21, 24):
         r, _ = run_rule(px, gem_rule, lookback=lb)
