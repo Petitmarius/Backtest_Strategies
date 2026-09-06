@@ -241,6 +241,17 @@ def relative_only(row):
 # figures
 # --------------------------------------------------------------------------
 
+def save_figure(fig, path):
+    """Write a figure as PNG for review and as vector PDF for the paper.
+
+    LaTeX embeds the PDF, so lines and text stay sharp at any zoom; the PNG is
+    only there to be glanced at from a terminal or a file browser.
+    """
+    fig.savefig(path)
+    fig.savefig(os.path.splitext(path)[0] + ".pdf")
+    plt.close(fig)
+
+
 def fig_equity(curves, path):
     fig, ax = plt.subplots(figsize=(9, 5.2))
     for name, r in curves.items():
@@ -262,8 +273,7 @@ def fig_equity(curves, path):
     ax.annotate("%s – %s" % (first.strftime("%b %Y"), last.strftime("%b %Y")),
                 xy=(0.995, 0.02), xycoords="axes fraction", ha="right",
                 fontsize=8, color="#666")
-    fig.savefig(path)
-    plt.close(fig)
+    save_figure(fig, path)
 
 
 def fig_drawdown(curves, path):
@@ -278,8 +288,7 @@ def fig_drawdown(curves, path):
     ax.set_title("Pertes depuis le plus haut", loc="left", fontsize=11,
                  fontweight="bold")
     ax.legend(loc="lower left")
-    fig.savefig(path)
-    plt.close(fig)
+    save_figure(fig, path)
 
 
 def fig_allocation(held, path):
@@ -299,8 +308,7 @@ def fig_allocation(held, path):
     ax.grid(axis="y", visible=False)
     ax.set_title("Allocation retenue par la règle", loc="left", fontsize=11,
                  fontweight="bold")
-    fig.savefig(path)
-    plt.close(fig)
+    save_figure(fig, path)
 
 
 def fig_rolling(gem, bench, path, window=36):
@@ -322,8 +330,7 @@ def fig_rolling(gem, bench, path, window=36):
     ax.annotate("GEM devant sur %.0f %% des fenêtres" % share,
                 xy=(0.995, 0.05), xycoords="axes fraction", ha="right",
                 fontsize=8, color="#666")
-    fig.savefig(path)
-    plt.close(fig)
+    save_figure(fig, path)
 
 
 def fig_lookback(table, path):
@@ -340,8 +347,7 @@ def fig_lookback(table, path):
     ax2.grid(False)
     ax1.set_title("Sensibilité à la fenêtre de momentum", loc="left",
                   fontsize=11, fontweight="bold")
-    fig.savefig(path)
-    plt.close(fig)
+    save_figure(fig, path)
 
 
 # --------------------------------------------------------------------------

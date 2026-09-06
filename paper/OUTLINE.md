@@ -18,13 +18,15 @@ construction belong in the body, the audit apparatus in the appendix.
 
 ## Writing conventions
 
-These are constraints, not suggestions.
+Guidance, not rules to be enforced mechanically. The aim is a document that is
+as informative as it can be; nothing here should get in the way of that.
 
-- **No paragraph tunnels.** Prose serves the exhibits. Three to five sentences
-  per paragraph, and a figure or table roughly every page.
+- **Prose serves the exhibits.** Write as long as the argument needs, but say
+  the thing rather than circling it. Avoid paragraphs that restate what a table
+  already shows.
 - **Every exhibit is read where it appears.** Show it, say what it shows, say
-  what it means — then move on. No block of tables followed by a block of
-  commentary.
+  what it means. Avoid a block of tables followed by a block of commentary.
+- Illustrate wherever illustration helps. There is no quota either way.
 - Numbers in the text always carry their unit and period.
 - First person plural, past tense for what was done, present for what holds.
 
@@ -112,11 +114,11 @@ core. No taxes.
 
 | # | Caption | Status |
 |---|---|---|
-| 1 | The Global Equities Momentum decision rule | to create |
-| 2 | Provenance of each series over time | to create |
+| 1 | The Global Equities Momentum decision rule | **done** |
+| 2 | Provenance of each series over time | **done** |
 | 3 | Growth of $100, log scale, 1971-2026 | exists |
 | 4 | Drawdowns from prior peak | exists |
-| 5 | Annual returns, GEM vs S&P 500 | to create |
+| 5 | Annual returns, GEM vs S&P 500 | **done** |
 | 6 | Asset held by the rule over time | exists |
 | 7 | Rolling 36-month excess return vs S&P 500 | exists |
 | 8 | Sensitivity to the momentum lookback | exists |
@@ -132,7 +134,7 @@ All figures export to **vector PDF**, not PNG.
 | # | Title | Location | Status |
 |---|---|---|---|
 | 1 | Provenance of each series, by segment | §3 | from SEGMENTS.md |
-| 2 | Summary statistics of the four series | §3 | to create |
+| 2 | Summary statistics of the four series | §3 | **done** |
 | 3 | Performance, 1971-2026 | §4.1 | exists |
 | 4 | Decomposition: absolute, relative, combined | §4.2 | exists |
 | 5 | Allocation effect versus timing effect | §4.3 | exists |
@@ -148,9 +150,15 @@ To verify before citing — no approximate bibliography.
 **Foundations** — Jegadeesh & Titman (1993, *Journal of Finance*); Moskowitz,
 Ooi & Pedersen (2012, *JFE*); Asness, Moskowitz & Pedersen (2013, *JF*).
 
-**GEM** — Antonacci, *Dual Momentum Investing* (2014); Antonacci's SSRN paper
-(in repo); *Extended Backtest of Global Equities Momentum* (2018); ReSolve,
-*Global Equity Momentum: A Craftsman's Perspective* (2019); Link (2025).
+**GEM** — Antonacci, Gary. "Risk Premia Harvesting Through Dual Momentum."
+Portfolio Management Consultants. First version 18 April 2012, this version
+1 October 2016. SSRN 2042750. First-place winner of the 2012 NAAIM Wagner
+Awards. *Verified against the PDF in the repository.*
+Also: Antonacci, *Dual Momentum Investing* (McGraw-Hill, 2014);
+*Extended Backtest of Global Equities Momentum* (Medium / optimalmomentum.com,
+2018); ReSolve, *Global Equity Momentum: A Craftsman's Perspective* (2019);
+Link, Grzegorz, *Dual Momentum and Global Growth Cycle Enhanced*
+(grzegorz.link/momentum-enhanced).
 
 **Critical frame** — McLean & Pontiff (2016, *JF*); Harvey, Liu & Zhu (2016,
 *RFS*); Novy-Marx (2012).
@@ -163,16 +171,21 @@ Ibbotson/Morningstar.
 The introduction is written last: a result must be settled before it can be
 announced well.
 
-1. LaTeX skeleton, bibliography file, vector figure export
-2. Figures 1, 2, 5 and Table 2 — the missing exhibits
-3. §3 Data and methodology, §2 The strategy
-4. §4 Results, §5 Robustness
-5. §6 Limitations, §7 Conclusion
-6. §1 Introduction, then the abstract
-7. Reference verification and proofreading
+1. ~~Vector figure export~~ done — every figure now writes PNG and PDF
+2. ~~Figures 1, 2, 5 and Table 2~~ done — `src/paper_exhibits.py`
+3. LaTeX skeleton and bibliography file
+4. §3 Data and methodology, §2 The strategy
+5. §4 Results, §5 Robustness
+6. §6 Limitations, §7 Conclusion
+7. §1 Introduction, then the abstract
+8. Reference verification and proofreading
+
+## Reproducibility statement
+
+The paper cites the public repository as the source of the dataset and the
+code, so that any result can be reproduced without paid data. To be added once
+the repository is made public.
 
 ## Open items
 
-- Journal-neutral template, or a specific one?
-- Author block and affiliation.
-- Whether to include the dataset DOI / repository link in the paper.
+- Author name and affiliation for the title block.
