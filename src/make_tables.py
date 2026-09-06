@@ -88,7 +88,7 @@ def table_provenance():
         "EXUS": ("2017-01", "2026-07",
                  "MSCI ACWI ex USA IMI, gross", "MSCI"),
         "BOND": ("2017-01", "2026-07",
-                 "Bloomberg US Aggregate", "Yahoo Finance (AGG)"),
+                 "Bloomberg US Aggregate", "Yahoo Finance"),
     }
     names = {"US": "US equity", "EXUS": "Ex-US equity",
              "BOND": "US aggregate bonds", "TBILL": "T-bills"}
@@ -114,7 +114,9 @@ def table_provenance():
             "locating the contiguous span over which the ratio of the spliced "
             "series to a candidate component is constant, and confirming "
             "against the month in which the incoming component is rebased. "
-            "The T-bill leg is a single continuous source and is not spliced.")
+            "The T-bill leg is a single continuous source and is not spliced. "
+            "From 2017 the bond leg is taken from the AGG exchange-traded "
+            "fund, which tracks the Aggregate net of a management fee.")
     return tabular(None, "lllll",
                    r"Series & From & To & Index measured & Provider",
                    body, note)

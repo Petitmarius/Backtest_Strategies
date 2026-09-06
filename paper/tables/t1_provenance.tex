@@ -13,10 +13,10 @@ Series & From & To & Index measured & Provider \\
 \addlinespace \\
 \textbf{US aggregate bonds} & 1969-12 & 1975-12 & 40/60 intermediate govt/corp. & Ibbotson SBBI \\
  & 1976-01 & 2016-12 & Bloomberg US Aggregate & Morningstar \\
- & 2017-01 & 2026-07 & Bloomberg US Aggregate & Yahoo Finance (AGG) \\
+ & 2017-01 & 2026-07 & Bloomberg US Aggregate & Yahoo Finance \\
 \addlinespace \\
 \textbf{T-bills} & 1969-12 & 2026-07 & US 1-month Treasury bill & Kenneth French \\
 \bottomrule
 \end{tabular}
 \\[0.4em]
-\begin{minipage}{\linewidth}\footnotesize Segment boundaries were recovered from the source file itself, by locating the contiguous span over which the ratio of the spliced series to a candidate component is constant, and confirming against the month in which the incoming component is rebased. The T-bill leg is a single continuous source and is not spliced.\end{minipage}
+\begin{minipage}{\linewidth}\footnotesize Segment boundaries were recovered from the source file itself, by locating the contiguous span over which the ratio of the spliced series to a candidate component is constant, and confirming against the month in which the incoming component is rebased. The T-bill leg is a single continuous source and is not spliced. From 2017 the bond leg is taken from the AGG exchange-traded fund, which tracks the Aggregate net of a management fee.\end{minipage}
