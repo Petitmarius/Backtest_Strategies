@@ -53,8 +53,16 @@ python src/build_dataset.py --rebuild --force   # tout refaire (geste délibér�
 python src/validate_dataset.py          # régénère l'audit (réseau, ~2 min)
 python src/gem_backtest.py              # backtest + figures + tables (hors ligne)
 python src/paper_exhibits.py            # exhibits du papier (hors ligne)
+python src/make_tables.py               # tableaux LaTeX depuis les CSV calculés
+python src/check_paper_numbers.py       # contrôle les chiffres du texte
 tectonic -X compile paper/gem.tex       # compile le manuscrit
 ```
+
+**Aucun chiffre du papier n'est saisi à la main dans un tableau ou une figure**
+— ils sont générés. Le texte, lui, est écrit à la main et peut donc dériver :
+`check_paper_numbers.py` recalcule chaque chiffre affirmé dans la prose et sort
+en erreur si l'un ne correspond plus. À lancer après toute reconstruction du
+dataset. Il a déjà attrapé deux dérives réelles.
 
 **Tectonic** est installé dans `~/AppData/Local/Programs/tectonic/` : un binaire
 unique qui télécharge ses paquets à la demande, aucune distribution LaTeX

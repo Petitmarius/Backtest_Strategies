@@ -236,8 +236,15 @@ HEADER_SHORT = {
 
 
 def table_from_csv(csv_name, columns=None, rows=None, note=None,
-                   index_label=" ", drop=()):
-    """Generic: a computed CSV rendered with its rows as they stand."""
+                   index_label=" ", drop=(), transposed=False, pct_all=False):
+    """Generic: a computed CSV rendered with its rows as they stand.
+
+    Most computed tables put the statistics in the rows. One -- the allocation
+    versus timing table -- puts them in the columns instead, so the percentage
+    formatting has to key off the column name rather than the row label. Pass
+    transposed=True for those; without it, percentages print as raw decimals.
+    pct_all=True is for tables where every numeric cell is a percentage.
+    """
     df = pd.read_csv(os.path.join(TAB_DIR, csv_name), index_col=0)
     if drop:
         df = df[[c for c in df.columns
@@ -247,12 +254,19 @@ def table_from_csv(csv_name, columns=None, rows=None, note=None,
     if rows:
         df = df.loc[rows]
 
+    def kind_of(label, column):
+        if pct_all:
+            return "pct"
+        key = column if transposed else label
+        if key in PCT_ROWS:
+            return "pct"
+        return "int" if key == "Months" else "num"
+
     body = []
     for label, row in df.iterrows():
-        kind = "pct" if label in PCT_ROWS else (
-            "int" if label == "Months" else "num")
-        body.append(" & ".join([esc(HEADER_SHORT.get(label, _label(label)))] +
-                               [fmt(v, kind) for v in row.values]))
+        cells = [fmt(v, kind_of(label, c)) for c, v in row.items()]
+        body.append(" & ".join([esc(HEADER_SHORT.get(label, _label(label)))]
+                               + cells))
     header = esc(index_label) + " & " + " & ".join(
         r"\textbf{%s}" % esc(HEADER_SHORT.get(c, c)) for c in df.columns)
 
@@ -299,15 +313,17 @@ def main():
              "stronger of US and ex-US equity, with no escape to bonds."))
 
     write("t5_allocation_timing.tex", table_from_csv(
-        "07_allocation_vs_timing.csv",
+        "07_allocation_vs_timing.csv", transposed=True,
         note="The static mix holds the same average allocation as GEM, fixed "
              "and rebalanced monthly. Weights are read off the backtest, not "
-             "chosen."))
+             "chosen. CAGR, volatility and maximum drawdown in percent."))
 
     write("t7_decades.tex", table_from_csv(
-        "04_decades.csv",
-        note="Calendar decades. The 1970s begin in January 1971, after the "
-             "12-month formation period, and the 2020s end in July 2026."))
+        "04_decades.csv", pct_all=True,
+        note="All figures in percent per year, except the maximum drawdown "
+             "columns which are levels. Calendar decades: the 1970s begin in "
+             "January 1971, after the 12-month formation period, and the 2020s "
+             "end in July 2026."))
 
     write("t8_robustness.tex", table_robustness())
     print("\nDone.")

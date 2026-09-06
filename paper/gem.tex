@@ -89,7 +89,7 @@ falling interest rates, and sixteen years of sustained US outperformance. Our
 findings reveal that \$100 invested in GEM would have grown to \$258{,}057,
 against \$37{,}908 for a passive holding of the S\&P 500 --- a compound annual
 return of 15.18\% against 11.27\%, with a maximum drawdown of 21.7\% against
-51.0\% and a Sharpe ratio of 0.83 against 0.50, at an average of 1.5 trades a
+50.9\% and a Sharpe ratio of 0.83 against 0.50, at an average of 1.5 trades a
 year. Decomposing that result, we find the two momentum filters to be
 complements rather than substitutes: run separately they add 77 and 203 basis
 points a year, run together 391. We further find that none of the excess return
@@ -134,7 +134,7 @@ do so, and find that the answer is not the one a reader would naturally assume.
 
 We replicate the strategy over 1971--2026 and reproduce the headline result
 closely: 15.18\% a year against 11.27\% for the S\&P 500, a maximum drawdown of
-21.7\% against 51.0\%, a Sharpe ratio of 0.83 against 0.50, and an annualised
+21.7\% against 50.9\%, a Sharpe ratio of 0.83 against 0.50, and an annualised
 alpha of 6.61\% with a Newey--West $t$-statistic of 4.31. We then decompose it,
 and two findings emerge.
 
@@ -381,7 +381,7 @@ results and varied in Section~\ref{sec:robustness}; taxes are not modelled.
 
 Over the full sample GEM compounded at 15.18\% a year against 11.27\% for the
 S\&P 500, with lower volatility (12.91\% against 15.20\%) and less than half
-the worst drawdown (21.7\% against 51.0\%). Figure~\ref{fig:equity} shows what
+the worst drawdown (21.7\% against 50.9\%). Figure~\ref{fig:equity} shows what
 a difference of 3.9 points a year does when it is compounded over fifty-five
 years: \$100 invested in GEM in January 1971 becomes \$258{,}057 by July 2026,
 against \$37{,}908 for the same \$100 left in the index --- close to seven
@@ -433,6 +433,13 @@ US equity when it beats T-bills and bonds otherwise, never touching the non-US
 leg; relative momentum alone always holds the stronger of the two equity
 markets, with no escape to bonds.
 
+\begin{table}[!ht]
+  \centering
+  \caption{Decomposition: what each momentum filter contributes.}
+  \label{tab:decomposition}
+  \input{tables/t4_decomposition}
+\end{table}
+
 Each half beats the index, and each does so in a characteristic way. Absolute
 momentum adds 77 basis points a year, but it cuts the drawdown from 51\% to
 30\% and the volatility from 15.2\% to 12.3\% --- it is a risk filter that
@@ -467,13 +474,6 @@ choose from when the gate is open is what turns a defensive overlay into a
 strategy. This complementarity is \citeauthor{antonacci2016}'s central claim,
 and it reproduces here on a different sample and different data.
 
-\begin{table}[htbp]
-  \centering
-  \caption{Decomposition: what each momentum filter contributes.}
-  \label{tab:decomposition}
-  \input{tables/t4_decomposition}
-\end{table}
-
 \subsection{Allocation or timing?}
 
 A strategy that moves between three assets earns two different things: whatever
@@ -489,6 +489,13 @@ percentage point on every leg of the 45/28/27 global allocation benchmark that
 \citet{antonacci2018} uses for the same purpose, which suggests he calibrated
 his on the strategy's realised allocation as well.
 
+\begin{table}[!ht]
+  \centering
+  \caption{Allocation effect versus timing effect.}
+  \label{tab:timing}
+  \input{tables/t5_allocation_timing}
+\end{table}
+
 The result is not what a diversification argument would predict. That static
 mix returned 10.03\% a year, \emph{below} the S\&P 500's 11.27\%. Over this
 sample the basket was a handicap worth 124 basis points a year, for the reason
@@ -502,18 +509,11 @@ diversification; all of it comes from timing, which must first pay off a
 handicap.} A reader who takes GEM to be a well-diversified portfolio with a
 momentum overlay has the causality backwards.
 
-Risk splits the other way. The static mix cuts the maximum drawdown from 51.0\%
+Risk splits the other way. The static mix cuts the maximum drawdown from 50.9\%
 to 41.9\%, and the timing takes it from there to 21.7\%. Diversification
 therefore does its conventional job on risk --- 9.0 points of it --- while
 costing return; the switching supplies both the remaining 20.3 points of
 drawdown reduction and the entire return advantage.
-
-\begin{table}[htbp]
-  \centering
-  \caption{Allocation effect versus timing effect.}
-  \label{tab:timing}
-  \input{tables/t5_allocation_timing}
-\end{table}
 
 \subsection{Risk-adjusted performance}
 
@@ -556,8 +556,8 @@ uncomfortable for anyone actually holding the strategy.
 
 Table~\ref{tab:decades} makes the concentration explicit. GEM beat the index in
 every decade from the 1970s through the 2000s, by margins of 1.3 to 11.4 points
-a year. It has lost in both decades since: $-4.5$ points a year in the 2010s
-and $-5.4$ in the 2020s so far. Every result reported above is therefore an
+a year. It has lost in both decades since: $-4.6$ points a year in the 2010s
+and $-5.2$ in the 2020s so far. Every result reported above is therefore an
 average over a sample in which the strategy worked for four decades and then
 stopped. Section~\ref{sec:limitations} takes that up directly.
 
@@ -656,11 +656,11 @@ model it.
 
 Table~\ref{tab:decades} showed the pattern; it is worth quantifying. Over
 1971--2009 GEM returned 17.71\% a year against 10.03\% for the S\&P 500, an
-advantage of 7.7 points. Over 2010--2026 it returned 9.42\% against 14.26\%, a
+advantage of 7.7 points. Over 2010--2026 it returned 9.45\% against 14.26\%, a
 shortfall of 4.8 points. Sixteen years is not a blip.
 
 The cause is specific and measurable. Since 2010 the rule has been out of US
-equity in only 26\% of months --- 21 in bonds and 31 in non-US equity --- so
+equity in only 28\% of months --- 21 in bonds and 35 in non-US equity --- so
 the shortfall cannot be explained by excessive caution. It comes from
 \emph{when} those months fell. During the 21 defensive months since 2010 the
 S\&P 500 returned 34.1\% annualised. During the 149 defensive months of
@@ -725,7 +725,7 @@ every year.
 \label{sec:conclusion}
 
 Over 1971--2026 Global Equities Momentum returned 15.18\% a year against
-11.27\% for the S\&P 500, with a maximum drawdown of 21.7\% against 51.0\% and
+11.27\% for the S\&P 500, with a maximum drawdown of 21.7\% against 50.9\% and
 an annualised alpha of 6.61\% ($t = 4.31$). The replication is close to
 Antonacci's own figures.
 
