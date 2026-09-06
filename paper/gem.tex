@@ -257,9 +257,14 @@ publish, at no cost.
 \subsection{The four series}
 
 The dataset holds four monthly total-return index levels in US dollars, from
-December 1969 to July 2026 --- 680 observations. Table~\ref{tab:provenance}
-records where each one comes from, and Figure~\ref{fig:provenance} shows the
-same information as a timeline.
+December 1969 to July 2026 --- 680 observations.\footnote{The assembled
+dataset, the scripts that build and audit it, and the code producing every
+exhibit in this paper are available at
+\url{https://github.com/Petitmarius/Backtest_Strategies}
+\citep{petit2026data}. The dataset is versioned with a checksum, so the figures
+reported here can be tied to an exact file.} Table~\ref{tab:provenance} records
+where each one comes from, and Figure~\ref{fig:provenance} shows the same
+information as a timeline.
 
 \begin{table}[htbp]
   \centering
@@ -782,9 +787,12 @@ be checked, contradicted or extended.
 \section{Independent Verification of the Dataset}
 \label{app:audit}
 
-The historical core of the dataset is a CSV redistributed on GitHub that
-reproduces Antonacci's construction. It is convenient and it reaches back to
-1969, but it is not a primary source, so it cannot simply be trusted.
+The historical core of the dataset is the file \texttt{msci\_all\_gross.csv},
+redistributed in the repository of \citet{jansengem}, which reproduces
+Antonacci's construction. It is convenient and it reaches back to 1969, but it
+is not a primary source, so it cannot simply be trusted. Our own repaired and
+extended version, together with the audit code described below, is published at
+\citet{petit2026data}.
 
 Each of the four series was therefore rebuilt from providers with no connection
 to that file, and the two were compared over every month they have in common.
