@@ -166,6 +166,11 @@ Link, Grzegorz, *Dual Momentum and Global Growth Cycle Enhanced*
 **Data** — Kenneth French Data Library; MSCI; Bloomberg/Barclays;
 Ibbotson/Morningstar.
 
+## Status
+
+First complete draft written, 15 pages. All sections and all exhibits are in
+place; what remains is revision rather than composition.
+
 ## Work order
 
 The introduction is written last: a result must be settled before it can be
@@ -173,12 +178,12 @@ announced well.
 
 1. ~~Vector figure export~~ done — every figure now writes PNG and PDF
 2. ~~Figures 1, 2, 5 and Table 2~~ done — `src/paper_exhibits.py`
-3. LaTeX skeleton and bibliography file
-4. §3 Data and methodology, §2 The strategy
-5. §4 Results, §5 Robustness
-6. §6 Limitations, §7 Conclusion
-7. §1 Introduction, then the abstract
-8. Reference verification and proofreading
+3. ~~LaTeX skeleton and bibliography~~ done — Tectonic, `paper/gem.tex`
+4. ~~§3 Data and methodology, §2 The strategy~~ done
+5. ~~§4 Results, §5 Robustness~~ done
+6. ~~§6 Limitations, §7 Conclusion~~ done
+7. ~~§1 Introduction, then the abstract~~ done
+8. Reference verification and proofreading — **next**
 
 ## Reproducibility statement
 

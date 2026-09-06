@@ -50,7 +50,21 @@
 
 \begin{abstract}
 \noindent
-TODO --- written last, once the results are settled.
+We replicate Antonacci's Global Equities Momentum from 1971 to 2026 using only
+free, publicly accessible data, and publish the dataset and code. The rule
+returns 15.18\% a year against 11.27\% for the S\&P 500, with a maximum
+drawdown of 21.7\% against 51.0\% and an annualised alpha of 6.61\%
+($t = 4.31$, Newey--West) --- close to the published figures obtained from paid
+vendors. Two features of the strategy stand out. Its two momentum filters are
+complements, not substitutes: run separately they add 77 and 203 basis points a
+year, run together 391. And none of the excess return comes from
+diversification --- a static portfolio holding the strategy's own average
+allocation returns 10.03\%, below the index, so the asset basket is a handicap
+that the timing must first overcome. Diversification does, however, supply 9 of
+the 29 percentage points of drawdown reduction. We also document that the rule
+has underperformed a passive index by 4.8 points a year since 2010, and that
+its deepest drawdown in fifty-five years occurred in 2021--2023 while it held
+its defensive asset.
 \end{abstract}
 
 \vspace{0.5em}
@@ -58,7 +72,60 @@ TODO --- written last, once the results are settled.
 market timing, replication.
 
 \section{Introduction}
-TODO --- written last.
+
+Dual momentum is among the best known tactical asset allocation rules available
+to a private investor. \citet{antonacci2016} proposes combining two forms of
+momentum --- a relative test that picks the stronger of two equity markets, and
+an absolute test that decides whether to hold equities at all --- and reports
+that the combination beats a passive index by a wide margin, with far smaller
+drawdowns. The rule is simple enough to run in a spreadsheet, trades roughly
+once or twice a year, and has been widely adopted.
+
+It is also, in its published form, difficult to verify. The backtest rests on
+the S\&P 500, MSCI indices, Global Financial Data, the Bloomberg Barclays
+Aggregate and Ibbotson series --- every one a paid subscription. A reader who
+wants to check the numbers, test a variant, or see how the strategy has fared
+since publication needs a data budget that most readers do not have. The claim
+is prominent; the evidence is behind a paywall.
+
+This paper replicates Global Equities Momentum from 1971 to 2026 using
+\textbf{only free, publicly accessible data}, and publishes the dataset, the
+code and every exhibit. The headline result reproduces closely: 15.18\% a year
+against 11.27\% for the S\&P 500, a maximum drawdown of 21.7\% against 51.0\%,
+and an annualised alpha of 6.61\% with a Newey--West $t$-statistic of 4.31.
+That the figures match Antonacci's own is itself informative --- the result does
+not depend on expensive data.
+
+Beyond the replication, the paper makes two points about the strategy's
+anatomy.
+
+First, \textbf{the two momentum filters are complements rather than
+substitutes}, and the size of the interaction is larger than is generally
+appreciated. Run on their own, absolute momentum adds 77 basis points a year
+and relative momentum 203; run together they add 391. The 111 basis points that
+neither half earns alone come from the absolute filter removing the obligation
+to choose between two bad options.
+
+Second, and less intuitively, \textbf{none of the excess return comes from
+diversification}. A static portfolio holding GEM's own average allocation ---
+46\% US equity, 28\% non-US, 25\% bonds --- returned 10.03\% a year, below the
+S\&P 500. Over this sample the basket of assets was a handicap of 124 basis
+points; the switching had to overcome it before adding anything. Risk splits
+differently: diversification supplies 9 of the 29 percentage points of drawdown
+reduction, and timing the other 20.
+
+The paper also reports what the replication shows about the strategy's recent
+record. GEM has underperformed a passive index by 4.8 points a year since 2010,
+and its deepest drawdown in fifty-five years occurred in 2021--2023 --- while
+it was sitting in its defensive asset. Section~\ref{sec:limitations} sets out
+the mechanism and what can and cannot be concluded from it.
+
+The paper proceeds as follows. Section~\ref{sec:strategy} sets out the rule and
+what each of its two filters is for. Section~\ref{sec:data} describes the free
+data, its provenance and its discontinuities, and the implementation.
+Section~\ref{sec:results} reports the results, Section~\ref{sec:robustness}
+tests them against the one free parameter and against trading costs, and
+Section~\ref{sec:limitations} states the limitations.
 
 % =====================================================================
 \section{The Strategy}
@@ -252,7 +319,29 @@ results and varied in Section~\ref{sec:robustness}; taxes are not modelled.
 \label{sec:results}
 
 \subsection{Headline performance}
-TODO.
+
+Over the full sample GEM compounded at 15.18\% a year against 11.27\% for the
+S\&P 500, with lower volatility (12.91\% against 15.20\%) and less than half
+the worst drawdown (21.7\% against 51.0\%). Figure~\ref{fig:equity} shows what
+that difference does over fifty-five years: a dollar in GEM ends roughly
+seven times a dollar in the index. Table~\ref{tab:performance} gives the full
+comparison.
+
+The shape of Figure~\ref{fig:drawdowns} matters more than the headline number.
+GEM's drawdowns are not simply smaller versions of the index's; they are
+different events. The S\&P 500 has four episodes beyond 30\% --- 1973--74,
+2000--02, 2007--09 and 2020 --- and GEM avoids the worst of all four. Its own
+deepest loss comes from somewhere else entirely, and we return to it in
+Section~\ref{sec:limitations}.
+
+Two features of Table~\ref{tab:performance} are worth pausing on. The
+improvement is concentrated in the left tail: GEM's worst month is $-14.5$\%
+against $-21.5$\% for the index, and its fifth-percentile monthly return is
+$-4.8$\% against $-6.4$\%. That is what an absolute momentum filter is for --- it
+does not make good months better, it makes bad months rarer and shallower. And
+the strategy is positive in 67\% of months against 63\% for the index, a small
+edge in frequency that compounds precisely because the losing months are so
+much less severe.
 
 \begin{figure}[htbp]
   \centering
@@ -276,7 +365,33 @@ TODO.
 \end{table}
 
 \subsection{Where the return comes from}
-TODO.
+
+The rule has two filters, and they can be run separately.
+Table~\ref{tab:decomposition} does exactly that: absolute momentum alone holds
+US equity when it beats T-bills and bonds otherwise, never touching the non-US
+leg; relative momentum alone always holds the stronger of the two equity
+markets, with no escape to bonds.
+
+Each half beats the index, and each does so in a characteristic way. Absolute
+momentum adds 77 basis points a year, but it cuts the drawdown from 51\% to
+30\% and the volatility from 15.2\% to 12.3\% --- it is a risk filter that
+happens to pay for itself. Relative momentum adds 203 basis points, three times
+as much return, while leaving the drawdown at 55\%, slightly \emph{worse} than
+the index: always invested in equities, it rode 2008 down like everything else.
+
+Together they add 391 basis points. That is the result worth stating carefully,
+because $77 + 203 = 280$, not 391. \textbf{The two filters are not additive.}
+The combination earns 111 basis points a year that neither half earns alone.
+
+The mechanism is visible in what the filters do to each other. Relative
+momentum's weakness is that ranking always returns an answer: in 2008 it had to
+choose between two collapsing markets. The absolute filter removes that
+obligation, so the relative choice is only exercised in the states where being
+in equities is worth something at all. Conversely, absolute momentum's weakness
+is that its escape adds little return; giving it a second equity market to
+choose from when the gate is open is what turns a defensive overlay into a
+strategy. This complementarity is \citeauthor{antonacci2016}'s central claim,
+and it reproduces here on a different sample and different data.
 
 \begin{table}[htbp]
   \centering
@@ -286,7 +401,35 @@ TODO.
 \end{table}
 
 \subsection{Allocation or timing?}
-TODO.
+
+A strategy that moves between three assets earns two different things: whatever
+comes from holding that basket at all, and whatever comes from choosing when to
+hold which part of it. Comparing GEM with the S\&P 500 alone confounds the two,
+because the index is a single asset and GEM is three.
+
+Table~\ref{tab:timing} separates them with a benchmark carrying GEM's own
+average allocation --- 46\% US equity, 28\% non-US, 25\% bonds --- held fixed
+and rebalanced monthly. The weights are read off the backtest, not chosen: they
+are what the rule actually did, with the timing removed.
+
+The result is not what a diversification argument would predict. That static
+mix returned 10.03\% a year, \emph{below} the S\&P 500's 11.27\%. Over this
+sample the basket was a handicap worth 124 basis points a year, for the reason
+Table~\ref{tab:summary} already showed: non-US equity underperformed US equity
+while being more volatile, and bonds returned less than either.
+
+So the decomposition is stark. The switching is worth 515 basis points a year
+gross, of which 124 go to cancelling the drag of the basket, leaving the 391
+observed. \textbf{None of GEM's excess return over the S\&P 500 comes from
+diversification; all of it comes from timing, which must first pay off a
+handicap.} A reader who takes GEM to be a well-diversified portfolio with a
+momentum overlay has the causality backwards.
+
+Risk splits the other way. The static mix cuts the maximum drawdown from 51.0\%
+to 41.9\%, and the timing takes it from there to 21.7\%. Diversification
+therefore does its conventional job on risk --- 9.0 points of it --- while
+costing return; the switching supplies both the remaining 20.3 points of
+drawdown reduction and the entire return advantage.
 
 \begin{table}[htbp]
   \centering
@@ -296,10 +439,50 @@ TODO.
 \end{table}
 
 \subsection{Risk-adjusted performance}
-TODO.
+
+Regressing GEM's monthly excess return on the S\&P 500's, over the 667 months
+of the sample, gives
+\[
+  r_{\text{GEM},t} - r_{f,t}
+  \;=\; \alpha + \beta \,(r_{\text{S\&P},t} - r_{f,t}) + \varepsilon_t ,
+\]
+with an annualised $\alpha$ of 6.61\% ($t = 4.31$), $\beta = 0.57$ and
+$R^2 = 0.45$. Standard errors are Newey--West; an ordinary $t$-test would read
+higher, because a rule that holds the same asset for months at a time produces
+autocorrelated residuals.
+
+A beta of 0.57 is the quantitative form of what Figure~\ref{fig:allocation}
+shows: the strategy is out of US equity slightly more than half the time. The
+$R^2$ of 0.45 says that most of GEM's variance is \emph{not} the index's
+variance --- which is what one would want from a strategy whose defensive
+position is a different asset class.
+
+The $t$-statistic of 4.31 clears the threshold of three that
+\citet{harvey2016} propose for claims discovered after extensive data mining.
+That is a necessary condition, not a sufficient one, and Section~\ref{sec:robustness}
+tests how much of it survives perturbation of the one free parameter.
 
 \subsection{Behaviour through time}
-TODO.
+
+The aggregate numbers conceal a strong pattern. Figure~\ref{fig:annual} plots
+calendar-year returns side by side, and the asymmetry is the whole story: GEM
+rarely beats the index in a good year, and rarely loses much in a bad one. In
+the eleven calendar years the S\&P 500 declined, it averaged $-14.4$\% while
+GEM averaged $-0.4$\%. \textbf{The strategy earns its record by not
+participating in disasters, not by outperforming in booms.}
+
+Figure~\ref{fig:allocation} shows what it held to achieve that, and
+Figure~\ref{fig:rolling} shows the consistency of the result. Over rolling
+three-year windows GEM is ahead of the index 59\% of the time --- a majority,
+but not an overwhelming one, and the losing stretches are long enough to be
+uncomfortable for anyone actually holding the strategy.
+
+Table~\ref{tab:decades} makes the concentration explicit. GEM beat the index in
+every decade from the 1970s through the 2000s, by margins of 1.3 to 11.4 points
+a year. It has lost in both decades since: $-4.5$ points a year in the 2010s
+and $-5.4$ in the 2020s so far. Every result reported above is therefore an
+average over a sample in which the strategy worked for four decades and then
+stopped. Section~\ref{sec:limitations} takes that up directly.
 
 \begin{figure}[htbp]
   \centering
@@ -332,23 +515,167 @@ TODO.
 % =====================================================================
 \section{Robustness}
 \label{sec:robustness}
-TODO.
+
+GEM has one free parameter, the lookback window, and one cost the backtest
+ignores. Both deserve to be pushed on, because a result that survives only at
+its chosen setting is not a result.
+
+\subsection{The lookback window}
+
+Figure~\ref{fig:lookback} and Panel~A of Table~\ref{tab:robustness} vary the
+window from three to twenty-four months. Across that range the CAGR runs from
+12.21\% to 15.18\%, an amplitude of 2.97 points, and every setting beats the
+S\&P 500's 11.27\%. The strategy is therefore not fragile in the sense of
+working at one setting and failing at the others.
+
+But the twelve-month window is \textbf{the maximum of the grid}, and that
+should be said plainly rather than buried. Antonacci's chosen parameter is the
+best-performing one out of twenty-two tested here. Some of that is real ---
+returns rise fairly smoothly from three to twelve months and fall away after,
+which is the shape one expects from a genuine effect rather than from noise ---
+but a peak is still a peak, and an out-of-sample user should expect the middle
+of the range, near 13.5\%, rather than the top.
+
+Maximum drawdown is the less comfortable dimension. It ranges from $-19.6$\% to
+$-28.3$\%, and its variation across windows looks considerably more like noise
+than the return does: adjacent settings differ by six points with no pattern.
+The risk reduction GEM delivers is real but its magnitude is not precisely
+estimated.
+
+\subsection{Transaction costs}
+
+The rule changes asset 1.49 times a year on average, which is very low
+turnover; the absolute filter is what keeps it there, since a rule that
+switched on price alone would trade far more. Panel~B charges a cost on every
+change. At 25 basis points the CAGR falls from 15.18\% to 14.76\%, and even at
+100 basis points --- far above anything an ETF investor would pay today ---
+13.51\% remains well clear of the index.
+
+Costs are therefore not the binding constraint on this strategy. Taxes may
+be: the rule realises gains at unpredictable intervals, and in a taxable
+account the drag would be materially larger than anything in Panel~B. We do not
+model it.
 
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=0.86\textwidth]{05_lookback_sensitivity.pdf}
-  \caption{Sensitivity to the momentum lookback window.}
+  \caption{Sensitivity to the momentum lookback window. The dashed line marks
+  the twelve-month setting used throughout the paper.}
   \label{fig:lookback}
 \end{figure}
+
+\begin{table}[htbp]
+  \centering
+  \caption{Robustness to the lookback window and to transaction costs.}
+  \label{tab:robustness}
+  \input{tables/t8_robustness}
+\end{table}
 
 % =====================================================================
 \section{Limitations and Discussion}
 \label{sec:limitations}
-TODO.
+
+\subsection{The strategy has not worked since 2009}
+
+Table~\ref{tab:decades} showed the pattern; it is worth quantifying. Over
+1971--2009 GEM returned 17.71\% a year against 10.03\% for the S\&P 500, an
+advantage of 7.7 points. Over 2010--2026 it returned 9.42\% against 14.26\%, a
+shortfall of 4.8 points. Sixteen years is not a blip.
+
+The cause is specific and measurable. Since 2010 the rule has been out of US
+equity in only 26\% of months --- 21 in bonds and 31 in non-US equity --- so
+the shortfall cannot be explained by excessive caution. It comes from
+\emph{when} those months fell. During the 21 defensive months since 2010 the
+S\&P 500 returned 34.1\% annualised. During the 149 defensive months of
+1971--2009 it returned 5.3\%.
+
+That inversion is the whole result. A twelve-month rule exits after a decline
+has already happened and re-enters after a recovery is already underway. When
+bear markets were long --- 1973--74, 2000--02, 2007--09 --- the delay was
+affordable and the exit was right. Since 2010 the declines have been sharp and
+V-shaped: 2011, 2018, 2020 and 2022 all round-tripped faster than the signal
+could follow. Roughly three quarters of the shortfall comes from these bond
+whipsaws and the remaining quarter from holding non-US equity through a period
+of sustained US outperformance.
+
+Whether this is regime-dependence that will reverse, or the post-publication
+decay that \citet{mclean2016} document across anomalies generally, cannot be
+settled with one strategy and sixteen years. Both readings are consistent with
+the evidence. What can be said is that the strategy's published record was
+established almost entirely before it was published.
+
+\subsection{The defensive asset is not safe}
+
+Section~\ref{sec:strategy} noted that GEM escapes into aggregate bonds rather
+than cash. The cost of that choice is concentrated in one episode, and it is
+the worst in the sample.
+
+\textbf{GEM's deepest drawdown over fifty-five years, $-21.7$\%, runs from
+December 2021 to October 2023} --- and the strategy spent 13 of those 23 months
+in bonds. In 2022 it was defensive for seven months of twelve, and lost 16.9\%
+on the year while bonds lost 13.0\% and the S\&P 500 lost 18.1\%. The rule
+worked as designed, moved to safety as intended, and the safety lost money.
+
+This matters beyond one bad year. Every drawdown statistic in this paper is
+computed on a sample in which bonds rallied for four decades. A strategy whose
+risk control depends on bonds rising when equities fall has been tested almost
+entirely in the period when that correlation held.
+
+\subsection{Data and specification caveats}
+
+\textbf{The series are not homogeneous.} As Table~\ref{tab:provenance} sets
+out, the non-US leg changes universe in 1988 and the bond leg changes
+construction in 1976. Results spanning those dates mix regimes that are related
+but not identical.
+
+\textbf{The historical core is a redistribution.} It is audited against nine
+independent references in Appendix~\ref{app:audit}, and one real defect was
+found and repaired, which is evidence the audit works rather than evidence the
+file is sound. A reader who requires primary sources throughout would have to
+restrict the sample to 1997 onwards --- losing 1973--74 and 2000--02, which is
+to say losing the episodes where the strategy demonstrates its value.
+
+\textbf{The parameter was not chosen by us.} We inherited the twelve-month
+window from \citet{antonacci2016}, which avoids in-sample optimisation on our
+part but does not undo whatever selection went into the original choice.
+
+\textbf{Taxes are not modelled}, and neither is the practical difficulty of
+holding a strategy through the 2010s while it underperformed a passive index
+every year.
 
 \section{Conclusion}
 \label{sec:conclusion}
-TODO.
+
+Global Equities Momentum can be replicated on entirely free data. Over
+1971--2026 the rule returned 15.18\% a year against 11.27\% for the S\&P 500,
+with a maximum drawdown of 21.7\% against 51.0\% and an annualised alpha of
+6.61\% ($t = 4.31$). Those figures are close to Antonacci's own, obtained from
+paid vendors, which is itself a useful finding: the result does not depend on
+expensive data.
+
+Two things about \emph{how} the strategy produces that record are less widely
+appreciated than the record itself.
+
+The two momentum filters are complements, not substitutes. Run separately they
+add 77 and 203 basis points a year; run together they add 391. The absolute
+filter is what makes the relative choice worth making, because it removes the
+obligation to choose in the states where no choice is good.
+
+And the excess return is entirely timing. A static portfolio holding GEM's own
+average allocation returned 10.03\% a year, below the index: the basket of
+assets was a handicap over this sample, not an advantage. Diversification did
+reduce risk --- 9 of the 29 points of drawdown reduction --- but every basis
+point of return advantage came from switching.
+
+The strategy has nonetheless failed to beat a passive index since 2009, by 4.8
+points a year, and its worst drawdown in fifty-five years occurred in
+2021--2023, in its defensive asset. Both facts are consistent with a rule that
+was calibrated on an era of long bear markets and falling bond yields, and that
+has since met neither. Whether that is regime dependence or decay is not
+something this sample can decide.
+
+The dataset, the code and every exhibit in this paper are public, so any of the
+above can be checked, contradicted, or extended at no cost.
 
 \bibliography{references}
 
@@ -356,7 +683,63 @@ TODO.
 \appendix
 \section{Independent Verification of the Dataset}
 \label{app:audit}
-TODO.
+
+The historical core of the dataset is a CSV redistributed on GitHub that
+reproduces Antonacci's construction. It is convenient and it reaches back to
+1969, but it is not a primary source, so it cannot simply be trusted.
+
+Each of the four series was therefore rebuilt from providers with no connection
+to that file, and the two were compared over every month they have in common.
+Table~\ref{tab:audit} reports the nine comparisons. Correlations of monthly
+returns run from 0.9611 to 0.9999 and annualised differences in return from
+$-0.04$ to $+1.16$ percentage points. The larger gaps are expected rather than
+alarming: the MSCI and EAFE references measure a narrower universe than the
+audited series, and the ETF references are net of fees.
+
+Three further checks were run.
+
+\textbf{Timing.} A redistributed file shifted by one month would look correct
+on a chart but would destroy a momentum backtest, since the signal would be
+built on returns the strategy could not yet have observed. Correlations were
+therefore computed at lags $-2$ to $+2$. Every reference peaks at lag zero,
+with one documented exception: FRED's three-month bill series is a monthly
+average of a \emph{yield}, and the yield quoted in month $t$ is earned over
+month $t+1$, so its peak at lag $+1$ is the correct economic relationship. The
+strictly comparable reference for the cash leg, Kenneth French's one-month
+bill, peaks at lag zero with a correlation of 0.9938.
+
+\textbf{Splice joints.} A badly made splice usually shows up as one freak month
+at the junction. Each junction month was scored against the distribution of its
+own series; all four fall within three standard deviations.
+
+\textbf{Structure.} The panel was checked for a continuous monthly index, no
+duplicate months, strictly positive levels, and no monthly return beyond 40\%
+in absolute value.
+
+\subsection*{A defect found, and repaired}
+
+The structural check failed on the file as published. A cash total-return index
+accrues a positive yield every month, so any month-on-month \emph{fall} is by
+construction a data error rather than a market movement. Three such falls
+appear, all in November: 1990, 1991 and 1992. In each the level has lost its
+leading digit --- 0.366 where the surrounding months require 10.366, 0.970
+where they require 10.970, 1.366 where they require 11.366.
+
+Left uncorrected this injects a monthly return of $-96$\% followed by
+$+2{,}749$\% into the cash leg, which corrupts the absolute momentum signal for
+the twelve months following each occurrence. Each bad point is replaced by the
+geometric mean of its two neighbours, which recovers the dropped digit to four
+significant figures without hard-coding any constant. After the repair, the
+correlation of the cash leg with Kenneth French's one-month bill rises from
+0.025 to 0.9938 and the tracking error falls from 442\% to 0.11\%.
+
+A second, smaller discrepancy was handled by substitution rather than repair.
+Over 2013--2016 the file's cash column implies 0.95\% a year when the actual
+Treasury bill rate was 0.06\%. Kenneth French's series matches the file to 0.00
+percentage points a year over 1970--2012 and is correct where the file is not,
+so it is used for the whole sample. This removes both a splice and a defect. Its
+effect on the strategy is nil: no allocation decision changes in any of the 667
+months.
 
 \begin{table}[htbp]
   \centering

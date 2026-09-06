@@ -276,8 +276,8 @@ def main():
     write("t3_performance.tex", table_from_csv(
         "01_performance.csv",
         rows=["CAGR", "Volatility", "Sharpe", "Sortino", "Max drawdown",
-              "Calmar (MAR)", "Worst month", "Positive months",
-              "Excess return t-stat (NW)"],
+              "Calmar (MAR)", "Worst month", "Monthly VaR 5%",
+              "Positive months", "Excess return t-stat (NW)"],
         note="Monthly data, January 1971 to July 2026, 667 observations. "
              "Sharpe and Sortino ratios use the 1-month Treasury bill as the "
              "risk-free rate. The $t$-statistic uses Newey--West standard "
@@ -301,7 +301,42 @@ def main():
         "04_decades.csv",
         note="Calendar decades. The 1970s begin in January 1971, after the "
              "12-month formation period, and the 2020s end in July 2026."))
+
+    write("t8_robustness.tex", table_robustness())
     print("\nDone.")
+
+
+def table_robustness():
+    """Two robustness dimensions side by side: lookback and trading cost."""
+    look = pd.read_csv(os.path.join(TAB_DIR, "05_lookback_sensitivity.csv"),
+                       index_col=0)
+    cost = pd.read_csv(os.path.join(TAB_DIR, "06_transaction_costs.csv"),
+                       index_col=0)
+
+    body = [r"\multicolumn{5}{l}{\emph{Panel A: momentum lookback (months)}}"]
+    for lb in [3, 6, 9, 12, 15, 18, 21, 24]:
+        row = look.loc[lb]
+        body.append(" & ".join([
+            "%d months" % lb, fmt(row["CAGR"], "pct"),
+            fmt(row["Volatility"], "pct"), fmt(row["Sharpe"]),
+            fmt(row["Max drawdown"], "pct")]))
+
+    body.append(r"\addlinespace")
+    body.append(r"\multicolumn{5}{l}{\emph{Panel B: cost per allocation "
+                r"change, at 12 months}}")
+    for label, row in cost.iterrows():
+        body.append(" & ".join([
+            esc(label), fmt(row["CAGR"], "pct"),
+            fmt(row["Volatility"], "pct"), fmt(row["Sharpe"]),
+            fmt(row["Max drawdown"], "pct")]))
+
+    note = ("Panel A varies the window used by both momentum tests, holding "
+            "everything else fixed. Panel B charges a one-way cost on every "
+            "month in which the rule changes asset, which happens 1.49 times a "
+            "year on average.")
+    header = (r" & \textbf{CAGR (\%)} & \textbf{Vol.\ (\%)} & "
+              r"\textbf{Sharpe} & \textbf{Max DD (\%)}")
+    return tabular(None, "lrrrr", header, body, note)
 
 
 if __name__ == "__main__":
