@@ -23,6 +23,10 @@ src/data_sources.py      Fetchers bas niveau (une fonction par fournisseur)
 src/build_dataset.py     Assemble data/gem_dataset.csv + data/SOURCES.md
 src/validate_dataset.py  Audit indépendant -> data/VALIDATION.md
 src/gem_backtest.py      Backtest, tables et figures
+src/paper_exhibits.py    Exhibits propres au papier (arbre de décision, provenance, annuels)
+paper/gem.tex            Manuscrit LaTeX
+paper/references.bib     Bibliographie, chaque entrée vérifiée à la source
+paper/OUTLINE.md         Plan arrêté du papier
 
 data/gem_dataset.csv          Jeu maître FORMAT LARGE, 4 séries — entrée du backtest (généré)
 data/gem_dataset_detailed.csv Format long, une ligne par (date, série) avec sa provenance (généré)
@@ -48,7 +52,17 @@ python src/build_dataset.py --refresh   # ajoute UNIQUEMENT les mois nouveaux
 python src/build_dataset.py --rebuild --force   # tout refaire (geste délibéré)
 python src/validate_dataset.py          # régénère l'audit (réseau, ~2 min)
 python src/gem_backtest.py              # backtest + figures + tables (hors ligne)
+python src/paper_exhibits.py            # exhibits du papier (hors ligne)
+tectonic -X compile paper/gem.tex       # compile le manuscrit
 ```
+
+**Tectonic** est installé dans `~/AppData/Local/Programs/tectonic/` : un binaire
+unique qui télécharge ses paquets à la demande, aucune distribution LaTeX
+complète nécessaire.
+
+**Ne jamais écrire un `.tex` avec un heredoc bash** : même avec un délimiteur
+entre quotes, `\` y est réduit à `\`, ce qui casse silencieusement les fins de
+ligne des tableaux. Utiliser l'outil Write.
 
 **Le dataset est un artefact gelé, pas une sortie de build.** `--refresh`
 recopie verbatim les mois déjà publiés et n'ajoute que les nouveaux ; si une
@@ -152,9 +166,14 @@ production ne sont pas touchées, mais le fichier détaillé les utilise.
   et on ne les ajoute pas : les erreurs-types Newey-West sont implémentées à la
   main dans `gem_backtest.py`. Les rendements mensuels d'une règle de momentum
   sont autocorrélés, donc un t-test naïf surestime la significativité.
-- **Textes destinés à l'utilisateur en français**, code, noms de variables,
+- **Conversation avec l'utilisateur en français.** Code, noms de variables,
   docstrings et commentaires en anglais.
-- Figures : matplotlib seul, palette de `COLORS`, lisible en niveaux de gris.
+- **Tout ce qui atterrit dans le papier est en anglais** : libellés de figures,
+  titres, annotations, en-têtes de tableaux, noms de séries. Le papier est en
+  anglais ; une figure en français dedans est une erreur. La sortie console des
+  scripts suit la même langue, par cohérence avec le code.
+- Figures : matplotlib seul, palette de `COLORS`, lisible en niveaux de gris,
+  export simultané en PNG (relecture) et PDF vectoriel (LaTeX).
 
 ## Résultats de référence (1971-01 → 2026-07)
 

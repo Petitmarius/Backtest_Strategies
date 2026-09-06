@@ -262,7 +262,7 @@ def fig_equity(curves, path):
                 else (1.5 if emphasis else 1.0),
                 zorder=3 if emphasis else 2)
     ax.set_yscale("log")
-    ax.set_ylabel("Croissance de 100 USD (échelle log)")
+    ax.set_ylabel("Growth of $100 (log scale)")
     ax.set_xlabel("")
     ax.set_title("Global Equities Momentum vs buy-and-hold", loc="left",
                  fontsize=11, fontweight="bold")
@@ -285,7 +285,7 @@ def fig_drawdown(curves, path):
         if name == "GEM":
             ax.fill_between(dd.index, dd.values, 0, color=COLORS[name], alpha=0.12)
     ax.set_ylabel("Drawdown (%)")
-    ax.set_title("Pertes depuis le plus haut", loc="left", fontsize=11,
+    ax.set_title("Drawdowns from prior peak", loc="left", fontsize=11,
                  fontweight="bold")
     ax.legend(loc="lower left")
     save_figure(fig, path)
@@ -294,7 +294,7 @@ def fig_drawdown(curves, path):
 def fig_allocation(held, path):
     """Which asset the rule holds, over time."""
     order = ["US", "EXUS", "BOND"]
-    labels = {"US": "Actions US", "EXUS": "Actions hors US", "BOND": "Obligations"}
+    labels = {"US": "US equity", "EXUS": "Ex-US equity", "BOND": "US bonds"}
     shades = {"US": "#c0392b", "EXUS": "#2874a6", "BOND": "#7d8c8c"}
 
     fig, ax = plt.subplots(figsize=(9, 2.2))
@@ -306,7 +306,7 @@ def fig_allocation(held, path):
     ax.set_yticklabels([labels[k] for k in order])
     ax.set_ylim(-0.1, len(order))
     ax.grid(axis="y", visible=False)
-    ax.set_title("Allocation retenue par la règle", loc="left", fontsize=11,
+    ax.set_title("Asset held by the rule", loc="left", fontsize=11,
                  fontweight="bold")
     save_figure(fig, path)
 
@@ -323,11 +323,11 @@ def fig_rolling(gem, bench, path, window=36):
     ax.fill_between(diff.index, diff.values, 0, where=diff.values < 0,
                     color="#c0392b", alpha=0.35, interpolate=True)
     ax.plot(diff.index, diff.values, color="#1a1a1a", linewidth=0.9)
-    ax.set_ylabel("Écart annualisé (points)")
-    ax.set_title("Surperformance glissante de GEM sur %d mois vs S&P 500" % window,
+    ax.set_ylabel("Annualised difference (points)")
+    ax.set_title("Rolling %d-month excess return of GEM over the S&P 500" % window,
                  loc="left", fontsize=11, fontweight="bold")
     share = (diff > 0).mean() * 100
-    ax.annotate("GEM devant sur %.0f %% des fenêtres" % share,
+    ax.annotate("GEM ahead in %.0f%% of windows" % share,
                 xy=(0.995, 0.05), xycoords="axes fraction", ha="right",
                 fontsize=8, color="#666")
     save_figure(fig, path)
@@ -341,11 +341,11 @@ def fig_lookback(table, path):
     ax2.plot(table.index, table["Max drawdown"] * 100, color="#c0392b",
              marker="o", markersize=4, linewidth=1.4, label="Max drawdown")
     ax1.axvline(LOOKBACK, color="#1a1a1a", linestyle="--", linewidth=1.0)
-    ax1.set_xlabel("Fenêtre de momentum (mois)")
+    ax1.set_xlabel("Momentum lookback (months)")
     ax1.set_ylabel("CAGR (%)", color="#2874a6")
     ax2.set_ylabel("Max drawdown (%)", color="#c0392b")
     ax2.grid(False)
-    ax1.set_title("Sensibilité à la fenêtre de momentum", loc="left",
+    ax1.set_title("Sensitivity to the momentum lookback", loc="left",
                   fontsize=11, fontweight="bold")
     save_figure(fig, path)
 
@@ -380,7 +380,7 @@ def main():
     shares = held.value_counts(normalize=True)
     weights = {a: float(shares.get(a, 0.0)) for a in ("US", "EXUS", "BOND")}
     matched = static_mix(prices, weights, index=gem.index)
-    matched_label = "Mix statique %d/%d/%d" % tuple(
+    matched_label = "Static mix %d/%d/%d" % tuple(
         round(weights[a] * 100) for a in ("US", "EXUS", "BOND"))
 
     # Antonacci's own Global Asset Allocation benchmark, for comparability with
@@ -406,8 +406,8 @@ def main():
         performance(matched, rf, matched_label),
         performance(gaa, rf, "GAA 45/28/27"),
         performance(bench, rf, "S&P 500"),
-        performance(rets["EXUS"], rf, "Actions hors US"),
-        performance(rets["BOND"], rf, "Obligations US"),
+        performance(rets["EXUS"], rf, "Ex-US equity"),
+        performance(rets["BOND"], rf, "US bonds"),
         performance(sixty_forty, rf, "60/40"),
     ], axis=1)
     stats.to_csv(os.path.join(TAB_DIR, "01_performance.csv"))
@@ -420,13 +420,13 @@ def main():
 
     # ---- table 2: Antonacci decomposition ------------------------------
     decomp = pd.concat([
-        performance(bench, rf, "S&P 500 (référence)"),
-        performance(abs_only, rf, "Momentum absolu seul"),
-        performance(rel_only, rf, "Momentum relatif seul"),
-        performance(gem, rf, "GEM (combiné)"),
+        performance(bench, rf, "S&P 500 (benchmark)"),
+        performance(abs_only, rf, "Absolute momentum only"),
+        performance(rel_only, rf, "Relative momentum only"),
+        performance(gem, rf, "GEM (combined)"),
     ], axis=1)
-    spread = (decomp.loc["CAGR"] - decomp.loc["CAGR", "S&P 500 (référence)"]) * 10000
-    decomp.loc["Écart vs S&P 500 (bps)"] = spread
+    spread = (decomp.loc["CAGR"] - decomp.loc["CAGR", "S&P 500 (benchmark)"]) * 10000
+    decomp.loc["Excess over S&P 500 (bps)"] = spread
     decomp.to_csv(os.path.join(TAB_DIR, "02_decomposition.csv"))
 
     print("\n" + "=" * 88)
@@ -435,9 +435,9 @@ def main():
     print(_fmt(decomp).to_string())
     print("\nLes deux briques prises isolément n'expliquent pas le total : "
           "%.0f + %.0f = %.0f bps contre %.0f bps combinés."
-          % (spread["Momentum absolu seul"], spread["Momentum relatif seul"],
-             spread["Momentum absolu seul"] + spread["Momentum relatif seul"],
-             spread["GEM (combiné)"]))
+          % (spread["Absolute momentum only"], spread["Relative momentum only"],
+             spread["Absolute momentum only"] + spread["Relative momentum only"],
+             spread["GEM (combined)"]))
 
     # ---- table 2b: allocation effect vs timing effect ------------------
     def cagr_of(r):
@@ -446,22 +446,22 @@ def main():
     c_bench, c_mix, c_gem = cagr_of(bench), cagr_of(matched), cagr_of(gem)
     timing = pd.DataFrame({
         "CAGR": [c_bench, c_mix, c_gem],
-        "Volatilité": [bench.std() * np.sqrt(MONTHS),
+        "Volatility": [bench.std() * np.sqrt(MONTHS),
                        matched.std() * np.sqrt(MONTHS),
                        gem.std() * np.sqrt(MONTHS)],
         "Max drawdown": [drawdown_series(bench).min(),
                          drawdown_series(matched).min(),
                          drawdown_series(gem).min()],
-        "Corrélation avec GEM": [bench.corr(gem), matched.corr(gem), 1.0],
+        "Correlation with GEM": [bench.corr(gem), matched.corr(gem), 1.0],
     }, index=["S&P 500", matched_label, "GEM"])
-    timing["Écart vs S&P 500 (bps)"] = (timing["CAGR"] - c_bench) * 10000
+    timing["Excess over S&P 500 (bps)"] = (timing["CAGR"] - c_bench) * 10000
     timing.to_csv(os.path.join(TAB_DIR, "07_allocation_vs_timing.csv"))
 
     print("\n" + "=" * 88)
     print("TABLE 2b — Effet allocation contre effet timing")
     print("=" * 88)
     show = timing.copy()
-    for c in ["CAGR", "Volatilité", "Max drawdown"]:
+    for c in ["CAGR", "Volatility", "Max drawdown"]:
         show[c] = (show[c] * 100).round(2)
     print(show.round(2).to_string())
     print("\n  Le mix statique détient la MÊME allocation moyenne que GEM "
@@ -492,13 +492,13 @@ def main():
     # ---- table 3: regression vs benchmark ------------------------------
     reg = ols_nw((gem - rf).values, (bench - rf).values)
     reg_tbl = pd.Series({
-        "Alpha annualisé": reg["alpha_ann"],
-        "Alpha t-stat (Newey-West)": reg["alpha_t"],
-        "Bêta vs S&P 500": reg["beta"],
-        "Bêta t-stat (Newey-West)": reg["beta_t"],
+        "Annualised alpha": reg["alpha_ann"],
+        "Alpha t-statistic (Newey-West)": reg["alpha_t"],
+        "Beta on the S&P 500": reg["beta"],
+        "Beta t-statistic (Newey-West)": reg["beta_t"],
         "R²": reg["r2"],
         "Observations": reg["n"],
-    }, name="GEM vs S&P 500 (excès de rendement)")
+    }, name="GEM versus the S&P 500 (excess returns)")
     reg_tbl.to_frame().to_csv(os.path.join(TAB_DIR, "03_regression.csv"))
 
     print("\n" + "=" * 88)
@@ -514,15 +514,15 @@ def main():
         if len(g) < 12:
             continue
         decade.append({
-            "Décennie": label,
+            "Decade": label,
             "GEM CAGR": (1 + g).prod() ** (MONTHS / len(g)) - 1,
             "S&P 500 CAGR": (1 + b).prod() ** (MONTHS / len(b)) - 1,
-            "Écart": ((1 + g).prod() ** (MONTHS / len(g))
+            "Difference": ((1 + g).prod() ** (MONTHS / len(g))
                       - (1 + b).prod() ** (MONTHS / len(b))),
             "GEM MaxDD": drawdown_series(g).min(),
             "S&P 500 MaxDD": drawdown_series(b).min(),
         })
-    dec = pd.DataFrame(decade).set_index("Décennie")
+    dec = pd.DataFrame(decade).set_index("Decade")
     dec.to_csv(os.path.join(TAB_DIR, "04_decades.csv"))
 
     print("\n" + "=" * 88)
@@ -535,16 +535,16 @@ def main():
     for lb in range(3, 25):
         r, h = run_rule(prices, gem_rule, lookback=lb)
         s = performance(r, rf.reindex(r.index))
-        s["Trades/an"] = (h != h.shift()).sum() / (len(h) / MONTHS)
+        s["Trades/year"] = (h != h.shift()).sum() / (len(h) / MONTHS)
         rows[lb] = s
     look = pd.DataFrame(rows).T
-    look.index.name = "Lookback (mois)"
+    look.index.name = "Lookback (months)"
     look.to_csv(os.path.join(TAB_DIR, "05_lookback_sensitivity.csv"))
 
     print("\n" + "=" * 88)
     print("TABLE 5 — Sensibilité à la fenêtre de momentum")
     print("=" * 88)
-    show = look[["CAGR", "Volatility", "Sharpe", "Max drawdown", "Trades/an"]].copy()
+    show = look[["CAGR", "Volatility", "Sharpe", "Max drawdown", "Trades/year"]].copy()
     for c in ["CAGR", "Volatility", "Max drawdown"]:
         show[c] = (show[c] * 100).round(2)
     print(show.round(2).to_string())
@@ -561,7 +561,7 @@ def main():
         r, h = run_rule(prices, gem_rule, cost_bps=bps)
         cost_rows["%d bps" % bps] = performance(r, rf.reindex(r.index))
     costs = pd.DataFrame(cost_rows).T
-    costs.index.name = "Coût par changement d'allocation"
+    costs.index.name = "Cost per allocation change"
     costs.to_csv(os.path.join(TAB_DIR, "06_transaction_costs.csv"))
 
     turnover = (held != held.shift()).sum() / (len(held) / MONTHS)

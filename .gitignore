@@ -7,3 +7,11 @@ output/run_log.txt
 
 # Cache des sources live (regenerable)
 data/cache/
+
+# Sortie de compilation LaTeX
+paper/*.pdf
+paper/*.aux
+paper/*.log
+paper/*.bbl
+paper/*.blg
+paper/*.out

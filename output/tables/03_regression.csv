@@ -1,7 +1,7 @@
-,GEM vs S&P 500 (excès de rendement)
-Alpha annualisé,0.0660929729119406
-Alpha t-stat (Newey-West),4.312153304257063
-Bêta vs S&P 500,0.5699802374181657
-Bêta t-stat (Newey-West),10.639924208729191
+,GEM versus the S&P 500 (excess returns)
+Annualised alpha,0.0660929729119406
+Alpha t-statistic (Newey-West),4.312153304257063
+Beta on the S&P 500,0.5699802374181657
+Beta t-statistic (Newey-West),10.639924208729191
 R²,0.4543983176682327
 Observations,667.0
