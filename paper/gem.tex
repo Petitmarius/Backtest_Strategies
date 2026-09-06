@@ -1,4 +1,4 @@
-% Global Equities Momentum -- replication on free data
+% Global Equities Momentum -- replication and decomposition
 %
 % Build:  tectonic -X compile paper/gem.tex
 % Figures come as vector PDFs from ../output/figures and tables as generated
@@ -34,8 +34,9 @@
 \renewcommand{\textfraction}{0.08}
 \renewcommand{\floatpagefraction}{0.8}
 
-\title{\textbf{Global Equities Momentum on Free Data}\\[0.35em]
-       \large A Replication of Antonacci's Dual Momentum, 1971--2026}
+\title{\textbf{Global Equities Momentum, 1971--2026}\\[0.35em]
+       \large A Replication of Antonacci's Dual Momentum and a
+       Decomposition of Its Returns}
 
 \author{Marius Petit\thanks{Student in Financial Markets, EDHEC Business
         School. This is independent work, carried out on the author's own
@@ -50,26 +51,29 @@
 
 \begin{abstract}
 \noindent
-We replicate Antonacci's Global Equities Momentum from 1971 to 2026 using only
-free, publicly accessible data, and publish the dataset and code. The rule
-returns 15.18\% a year against 11.27\% for the S\&P 500, with a maximum
-drawdown of 21.7\% against 51.0\% and an annualised alpha of 6.61\%
-($t = 4.31$, Newey--West) --- close to the published figures obtained from paid
-vendors. Two features of the strategy stand out. Its two momentum filters are
-complements, not substitutes: run separately they add 77 and 203 basis points a
-year, run together 391. And none of the excess return comes from
-diversification --- a static portfolio holding the strategy's own average
-allocation returns 10.03\%, below the index, so the asset basket is a handicap
-that the timing must first overcome. Diversification does, however, supply 9 of
-the 29 percentage points of drawdown reduction. We also document that the rule
-has underperformed a passive index by 4.8 points a year since 2010, and that
-its deepest drawdown in fifty-five years occurred in 2021--2023 while it held
-its defensive asset.
+We replicate Antonacci's Global Equities Momentum over 1971--2026 and
+decompose where its returns come from. The rule returns 15.18\% a year against
+11.27\% for the S\&P 500, with a maximum drawdown of 21.7\% against 51.0\% and
+an annualised alpha of 6.61\% ($t = 4.31$, Newey--West). Two features of the
+strategy stand out. Its two momentum filters are complements rather than
+substitutes: run separately they add 77 and 203 basis points a year, run
+together 391. And none of the excess return comes from diversification --- a
+static portfolio holding the strategy's own average allocation returns 10.03\%,
+below the index, so the asset basket is a handicap that the timing must first
+overcome. Diversification does, however, supply 9 of the 29 percentage points
+of drawdown reduction. We further document that the rule has underperformed a
+passive index by 4.8 points a year since 2010, and that its deepest drawdown in
+fifty-five years occurred in 2021--2023 while it held its defensive asset. The
+dataset is built entirely from free sources and is published with the code.
 \end{abstract}
 
 \vspace{0.5em}
 \noindent\textbf{Keywords:} momentum, dual momentum, asset allocation,
 market timing, replication.
+
+\thispagestyle{empty}
+\newpage
+\setcounter{page}{2}
 
 \section{Introduction}
 
@@ -81,23 +85,15 @@ that the combination beats a passive index by a wide margin, with far smaller
 drawdowns. The rule is simple enough to run in a spreadsheet, trades roughly
 once or twice a year, and has been widely adopted.
 
-It is also, in its published form, difficult to verify. The backtest rests on
-the S\&P 500, MSCI indices, Global Financial Data, the Bloomberg Barclays
-Aggregate and Ibbotson series --- every one a paid subscription. A reader who
-wants to check the numbers, test a variant, or see how the strategy has fared
-since publication needs a data budget that most readers do not have. The claim
-is prominent; the evidence is behind a paywall.
+What is less often examined is \emph{why} it works. The rule combines two
+filters and holds three assets, and the published record does not say how much
+of the result comes from each, or which of its components is doing the work.
+That is the question this paper takes up.
 
-This paper replicates Global Equities Momentum from 1971 to 2026 using
-\textbf{only free, publicly accessible data}, and publishes the dataset, the
-code and every exhibit. The headline result reproduces closely: 15.18\% a year
-against 11.27\% for the S\&P 500, a maximum drawdown of 21.7\% against 51.0\%,
-and an annualised alpha of 6.61\% with a Newey--West $t$-statistic of 4.31.
-That the figures match Antonacci's own is itself informative --- the result does
-not depend on expensive data.
-
-Beyond the replication, the paper makes two points about the strategy's
-anatomy.
+We replicate the strategy over 1971--2026 and reproduce the headline result
+closely: 15.18\% a year against 11.27\% for the S\&P 500, a maximum drawdown of
+21.7\% against 51.0\%, and an annualised alpha of 6.61\% with a Newey--West
+$t$-statistic of 4.31. We then decompose it, and two findings emerge.
 
 First, \textbf{the two momentum filters are complements rather than
 substitutes}, and the size of the interaction is larger than is generally
@@ -120,9 +116,16 @@ and its deepest drawdown in fifty-five years occurred in 2021--2023 --- while
 it was sitting in its defensive asset. Section~\ref{sec:limitations} sets out
 the mechanism and what can and cannot be concluded from it.
 
+One methodological choice is worth flagging at the outset. Antonacci's own
+backtest rests on Global Financial Data, MSCI, Bloomberg Barclays and Ibbotson
+series, all of which require paid subscriptions, so his figures cannot be
+checked without a data budget. We rebuild the series from free sources and
+publish the dataset alongside the code, which makes every number here open to
+contradiction. Section~\ref{sec:data} sets out what that costs in coverage.
+
 The paper proceeds as follows. Section~\ref{sec:strategy} sets out the rule and
-what each of its two filters is for. Section~\ref{sec:data} describes the free
-data, its provenance and its discontinuities, and the implementation.
+what each of its two filters is for. Section~\ref{sec:data} describes the data,
+its provenance and its discontinuities, and the implementation.
 Section~\ref{sec:results} reports the results, Section~\ref{sec:robustness}
 tests them against the one free parameter and against trading costs, and
 Section~\ref{sec:limitations} states the limitations.
@@ -244,9 +247,17 @@ series have the same breaks.
 
 \textbf{The non-US leg changes universe in 1988.} Before that date it is MSCI
 World ex USA, which covers developed markets only; after it, MSCI ACWI ex USA,
-which adds emerging markets. Emerging markets are roughly a quarter of the
-index today. The series is therefore not homogeneous across the sample: its
-volatility and its country composition both shift at that point.
+which adds emerging markets.
+
+The discontinuity this creates at the junction itself is negligible. MSCI
+launched its Emerging Markets index in 1988 with ten countries representing
+less than 1\% of world market capitalisation, so in 1988 the two indices were
+measuring almost the same thing, and splicing one onto the other costs
+essentially nothing in return terms. What changes is not the level but the
+trajectory: the emerging-market weight grew steadily, to roughly a quarter of
+the index today. The series is therefore homogeneous where it is spliced and
+progressively less so thereafter, which affects the interpretation of the
+later decades rather than the validity of the join.
 
 \textbf{The bond leg changes nature in 1976.} The Bloomberg Barclays US
 Aggregate does not exist before January 1976. Prior months use a monthly
@@ -623,10 +634,12 @@ entirely in the period when that correlation held.
 
 \subsection{Data and specification caveats}
 
-\textbf{The series are not homogeneous.} As Table~\ref{tab:provenance} sets
-out, the non-US leg changes universe in 1988 and the bond leg changes
-construction in 1976. Results spanning those dates mix regimes that are related
-but not identical.
+\textbf{The series are not fully homogeneous.} As Table~\ref{tab:provenance}
+sets out, the non-US leg changes universe in 1988 and the bond leg changes
+construction in 1976. Neither join is itself material --- emerging markets were
+under 1\% of world market capitalisation in 1988 --- but the emerging-market
+weight grows afterwards, so the later decades measure a somewhat different
+asset from the earlier ones.
 
 \textbf{The historical core is a redistribution.} It is audited against nine
 independent references in Appendix~\ref{app:audit}, and one real defect was
@@ -646,12 +659,10 @@ every year.
 \section{Conclusion}
 \label{sec:conclusion}
 
-Global Equities Momentum can be replicated on entirely free data. Over
-1971--2026 the rule returned 15.18\% a year against 11.27\% for the S\&P 500,
-with a maximum drawdown of 21.7\% against 51.0\% and an annualised alpha of
-6.61\% ($t = 4.31$). Those figures are close to Antonacci's own, obtained from
-paid vendors, which is itself a useful finding: the result does not depend on
-expensive data.
+Over 1971--2026 Global Equities Momentum returned 15.18\% a year against
+11.27\% for the S\&P 500, with a maximum drawdown of 21.7\% against 51.0\% and
+an annualised alpha of 6.61\% ($t = 4.31$). The replication is close to
+Antonacci's own figures.
 
 Two things about \emph{how} the strategy produces that record are less widely
 appreciated than the record itself.
@@ -674,8 +685,8 @@ was calibrated on an era of long bear markets and falling bond yields, and that
 has since met neither. Whether that is regime dependence or decay is not
 something this sample can decide.
 
-The dataset, the code and every exhibit in this paper are public, so any of the
-above can be checked, contradicted, or extended at no cost.
+The dataset, the code and every exhibit are published, so any of the above can
+be checked, contradicted or extended.
 
 \bibliography{references}
 
