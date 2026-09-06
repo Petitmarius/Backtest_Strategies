@@ -620,7 +620,15 @@ its chosen setting is not a result.
 
 \subsection{The lookback window}
 
-Figure~\ref{fig:lookback} and Panel~A of Table~\ref{tab:robustness} vary the
+\begin{figure}[!ht]
+  \centering
+  \includegraphics[width=0.86\textwidth]{05_lookback_sensitivity.pdf}
+  \caption{Sensitivity to the momentum lookback window. The dashed line marks
+  the twelve-month setting used throughout the paper.}
+  \label{fig:lookback}
+\end{figure}
+
+Figure~\ref{fig:lookback} and Table~\ref{tab:lookback} vary the
 window from three to twenty-four months. Across that range the CAGR runs from
 12.21\% to 15.18\%, an amplitude of 2.97 points, and every setting beats the
 S\&P 500's 11.27\%. The strategy is therefore not fragile in the sense of
@@ -640,34 +648,33 @@ than the return does: adjacent settings differ by six points with no pattern.
 The risk reduction GEM delivers is real but its magnitude is not precisely
 estimated.
 
+\begin{table}[!ht]
+  \centering
+  \caption{Robustness to the momentum lookback window.}
+  \label{tab:lookback}
+  \input{tables/t7_lookback}
+\end{table}
+
 \subsection{Transaction costs}
 
 The rule changes asset 1.49 times a year on average, which is very low
 turnover; the absolute filter is what keeps it there, since a rule that
-switched on price alone would trade far more. Panel~B charges a cost on every
-change. At 25 basis points the CAGR falls from 15.18\% to 14.76\%, and even at
-100 basis points --- far above anything an ETF investor would pay today ---
-13.51\% remains well clear of the index.
+switched on price alone would trade far more. Table~\ref{tab:costs} charges a
+cost on every change. At 25 basis points the CAGR falls from 15.18\% to
+14.76\%, and even at 100 basis points --- far above anything an ETF investor
+would pay today --- 13.51\% remains well clear of the index.
+
+\begin{table}[!ht]
+  \centering
+  \caption{Robustness to transaction costs.}
+  \label{tab:costs}
+  \input{tables/t8_costs}
+\end{table}
 
 Costs are therefore not the binding constraint on this strategy. Taxes may
 be: the rule realises gains at unpredictable intervals, and in a taxable
-account the drag would be materially larger than anything in Panel~B. We do not
-model it.
-
-\begin{figure}[htbp]
-  \centering
-  \includegraphics[width=0.86\textwidth]{05_lookback_sensitivity.pdf}
-  \caption{Sensitivity to the momentum lookback window. The dashed line marks
-  the twelve-month setting used throughout the paper.}
-  \label{fig:lookback}
-\end{figure}
-
-\begin{table}[htbp]
-  \centering
-  \caption{Robustness to the lookback window and to transaction costs.}
-  \label{tab:robustness}
-  \input{tables/t8_robustness}
-\end{table}
+account the drag would be materially larger than anything in
+Table~\ref{tab:costs}. We do not model it.
 
 % =====================================================================
 \section{Limitations and Discussion}
@@ -720,12 +727,6 @@ risk control depends on bonds rising when equities fall has been tested almost
 entirely in the period when that correlation held.
 
 \subsection{Data and specification caveats}
-
-\textbf{The series are not fully homogeneous.} As Table~\ref{tab:provenance}
-sets out, the non-US leg is spliced in 1988 and the bond leg in 1976. Neither
-join is itself material --- emerging markets were under 1\% of the global
-opportunity set in 1988 --- but the emerging-market weight grows afterwards, so
-the later decades measure a somewhat broader asset than the earlier ones.
 
 \textbf{The historical core is a redistribution.} It is audited against nine
 independent references in Appendix~\ref{app:audit}, and one real defect was

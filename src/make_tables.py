@@ -325,41 +325,50 @@ def main():
              "January 1971, after the 12-month formation period, and the 2020s "
              "end in July 2026."))
 
-    write("t8_robustness.tex", table_robustness())
+    write("t7_lookback.tex", table_lookback())
+    write("t8_costs.tex", table_costs())
     print("\nDone.")
 
 
-def table_robustness():
-    """Two robustness dimensions side by side: lookback and trading cost."""
+ROBUSTNESS_HEADER = (r" & \textbf{CAGR (\%)} & \textbf{Vol.\ (\%)} & "
+                     r"\textbf{Sharpe} & \textbf{Max DD (\%)}")
+
+
+def table_lookback():
+    """Robustness to the one free parameter, for section 5.1."""
     look = pd.read_csv(os.path.join(TAB_DIR, "05_lookback_sensitivity.csv"),
                        index_col=0)
-    cost = pd.read_csv(os.path.join(TAB_DIR, "06_transaction_costs.csv"),
-                       index_col=0)
-
-    body = [r"\multicolumn{5}{l}{\emph{Panel A: momentum lookback (months)}}"]
+    body = []
     for lb in [3, 6, 9, 12, 15, 18, 21, 24]:
         row = look.loc[lb]
+        label = "%d months" % lb
+        if lb == 12:
+            label = r"\textbf{12 months}"          # the setting used throughout
         body.append(" & ".join([
-            "%d months" % lb, fmt(row["CAGR"], "pct"),
-            fmt(row["Volatility"], "pct"), fmt(row["Sharpe"]),
-            fmt(row["Max drawdown"], "pct")]))
+            label, fmt(row["CAGR"], "pct"), fmt(row["Volatility"], "pct"),
+            fmt(row["Sharpe"]), fmt(row["Max drawdown"], "pct")]))
 
-    body.append(r"\addlinespace")
-    body.append(r"\multicolumn{5}{l}{\emph{Panel B: cost per allocation "
-                r"change, at 12 months}}")
+    note = ("The window used by both momentum tests is varied, holding "
+            "everything else fixed. Twelve months, in bold, is the setting "
+            "used throughout the paper and the one proposed by Antonacci.")
+    return tabular(None, "lrrrr", ROBUSTNESS_HEADER, body, note)
+
+
+def table_costs():
+    """Robustness to trading costs, for section 5.2."""
+    cost = pd.read_csv(os.path.join(TAB_DIR, "06_transaction_costs.csv"),
+                       index_col=0)
+    body = []
     for label, row in cost.iterrows():
         body.append(" & ".join([
             esc(label), fmt(row["CAGR"], "pct"),
             fmt(row["Volatility"], "pct"), fmt(row["Sharpe"]),
             fmt(row["Max drawdown"], "pct")]))
 
-    note = ("Panel A varies the window used by both momentum tests, holding "
-            "everything else fixed. Panel B charges a one-way cost on every "
-            "month in which the rule changes asset, which happens 1.49 times a "
-            "year on average.")
-    header = (r" & \textbf{CAGR (\%)} & \textbf{Vol.\ (\%)} & "
-              r"\textbf{Sharpe} & \textbf{Max DD (\%)}")
-    return tabular(None, "lrrrr", header, body, note)
+    note = ("A one-way cost is charged on every month in which the rule changes "
+            "asset, which happens 1.49 times a year on average. The lookback is "
+            "held at twelve months throughout.")
+    return tabular(None, "lrrrr", ROBUSTNESS_HEADER, body, note)
 
 
 if __name__ == "__main__":
