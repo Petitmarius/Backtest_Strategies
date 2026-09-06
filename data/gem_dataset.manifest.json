@@ -1,0 +1,40 @@
+{
+  "generated": "2026-09-06 11:45:41",
+  "rows": 680,
+  "start": "1969-12-31",
+  "end": "2026-07-31",
+  "columns": [
+    "US",
+    "EXUS",
+    "BOND",
+    "TBILL"
+  ],
+  "float_format": "%.6f",
+  "sha256": "e9f7256706086f801084e1e4275bd0d523975fc64026a94118d92e1be87ad6c6",
+  "fingerprint": {
+    "US": {
+      "first_level": 42.579,
+      "last_level": 16763.41931,
+      "cagr": 0.11138496,
+      "vol": 0.15287026
+    },
+    "EXUS": {
+      "first_level": 7.214,
+      "last_level": 1263.014298,
+      "cagr": 0.09558165,
+      "vol": 0.16884284
+    },
+    "BOND": {
+      "first_level": 62.994,
+      "last_level": 2333.425447,
+      "cagr": 0.06591756,
+      "vol": 0.05571307
+    },
+    "TBILL": {
+      "first_level": 2.239,
+      "last_level": 25.890931,
+      "cagr": 0.04421062,
+      "vol": 0.00946528
+    }
+  }
+}

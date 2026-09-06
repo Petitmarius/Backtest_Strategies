@@ -19,9 +19,11 @@ Out:  data/gem_dataset.csv, data/SOURCES.md
 
 from __future__ import annotations
 
+import hashlib
+import json
 import os
 import sys
-from datetime import date
+from datetime import date, datetime
 
 import pandas as pd
 
@@ -46,6 +48,11 @@ OUT_CSV = os.path.join(DATA_DIR, "gem_dataset.csv")
 OUT_DETAILED = os.path.join(DATA_DIR, "gem_dataset_detailed.csv")
 OUT_COMPONENTS = os.path.join(DATA_DIR, "gem_dataset_components.csv")
 CACHE_DIR = os.path.join(DATA_DIR, "cache")
+OUT_MANIFEST = os.path.join(DATA_DIR, "gem_dataset.manifest.json")
+
+# Every numeric output is written with this format, so the committed file is
+# byte-reproducible and its hash is meaningful.
+FLOAT_FMT = "%.6f"
 
 # Last month for which every column of the historical core is populated. The
 # core file runs to 2017-05 but its T-bill column stops in 2016-12, so this is
@@ -159,9 +166,8 @@ def splice(core, live, cut):
     return pd.concat([core, tail * scale]), (cut, scale, len(tail))
 
 
-def main():
-    os.makedirs(DATA_DIR, exist_ok=True)
-
+def build_panel():
+    """Assemble the four series from source. Requires network access."""
     print("1. Historical core")
     core = fetch_gem_core(repair=True)
     repairs = [r for r in core.attrs.get("repairs", []) if r["kind"] == "material"]
@@ -214,19 +220,35 @@ def main():
     df = pd.DataFrame(columns).dropna()
     df.index.name = "Date"
 
-    print("\n4. Master dataset")
+    print("\n4. Assembled panel")
     print("   %s -> %s, %d months, %d columns"
           % (df.index[0].date(), df.index[-1].date(), len(df), df.shape[1]))
-    df.to_csv(OUT_CSV, float_format="%.6f")
+
+    expected = pd.date_range(df.index[0], df.index[-1], freq="ME")
+    holes = expected.difference(df.index)
+    if len(holes):
+        raise SystemExit(
+            "ABORT: %d month(s) missing from the panel, first at %s.\n"
+            "Columns are joined on their common index, so any month a single "
+            "source lacks disappears from all four. That is a truncated "
+            "dataset, not a shorter sample. Re-run when the provider answers "
+            "in full." % (len(holes), holes[0].date()))
+    print("   continuity check: no missing month")
+    return df, core, repairs, notes, live_raw
+
+
+def write_outputs(df, core, repairs, notes, live_raw):
+    """Write the dataset and every file derived from it."""
+    df.to_csv(OUT_CSV, float_format=FLOAT_FMT)
     print("   wrote %s" % OUT_CSV)
 
     segments = build_segment_map(df)
     detailed = build_detailed(df, segments, repairs)
-    detailed.to_csv(OUT_DETAILED, index=False, float_format="%.6f")
+    detailed.to_csv(OUT_DETAILED, index=False, float_format=FLOAT_FMT)
     print("   wrote %s (%d rows, long format)" % (OUT_DETAILED, len(detailed)))
 
     comps = build_components(df, segments, live_raw)
-    comps.to_csv(OUT_COMPONENTS, float_format="%.6f")
+    comps.to_csv(OUT_COMPONENTS, float_format=FLOAT_FMT)
     print("   wrote %s (%d colonnes, composantes + colonne calculée)"
           % (OUT_COMPONENTS, comps.shape[1]))
 
@@ -234,6 +256,8 @@ def main():
     print("   wrote %s" % os.path.join(DATA_DIR, "SOURCES.md"))
     _write_segments(df, segments)
     print("   wrote %s" % os.path.join(DATA_DIR, "SEGMENTS.md"))
+    write_manifest(df)
+    print("   wrote %s" % OUT_MANIFEST)
 
     print("\n   Annualised returns over the full sample, sanity check:")
     for col in df.columns:
@@ -241,6 +265,136 @@ def main():
         cagr = (1 + r).prod() ** (12 / len(r)) - 1
         print("     %-6s %6.2f%%  (vol %5.2f%%)"
               % (col, cagr * 100, r.std() * 12 ** 0.5 * 100))
+
+
+# --------------------------------------------------------------------------
+# Freeze: the dataset is an artefact, not a build product
+# --------------------------------------------------------------------------
+
+def _sha256(path):
+    h = hashlib.sha256()
+    with open(path, "rb") as fh:
+        for chunk in iter(lambda: fh.read(65536), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def _fingerprint(df):
+    """Per-column summary statistics, stored so a drift is legible, not just
+    detected. A hash tells you something changed; these tell you what."""
+    out = {}
+    for col in df.columns:
+        r = df[col].pct_change().dropna()
+        out[col] = {
+            "first_level": round(float(df[col].iloc[0]), 6),
+            "last_level": round(float(df[col].iloc[-1]), 6),
+            "cagr": round(float((1 + r).prod() ** (12 / len(r)) - 1), 8),
+            "vol": round(float(r.std() * 12 ** 0.5), 8),
+        }
+    return out
+
+
+def write_manifest(df):
+    manifest = {
+        "generated": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "rows": int(len(df)),
+        "start": str(df.index[0].date()),
+        "end": str(df.index[-1].date()),
+        "columns": list(df.columns),
+        "float_format": FLOAT_FMT,
+        "sha256": _sha256(OUT_CSV),
+        "fingerprint": _fingerprint(df),
+    }
+    with open(OUT_MANIFEST, "w", encoding="utf-8") as fh:
+        json.dump(manifest, fh, indent=2)
+    return manifest
+
+
+def verify():
+    """Offline check of the committed dataset against its manifest."""
+    if not os.path.exists(OUT_CSV) or not os.path.exists(OUT_MANIFEST):
+        raise SystemExit("missing %s or %s -- run with --rebuild"
+                         % (OUT_CSV, OUT_MANIFEST))
+    with open(OUT_MANIFEST, encoding="utf-8") as fh:
+        m = json.load(fh)
+    df = pd.read_csv(OUT_CSV, index_col="Date", parse_dates=True)
+
+    print("Dataset : %s" % OUT_CSV)
+    print("  gelé le      %s" % m["generated"])
+    print("  période      %s -> %s (%d mois)" % (m["start"], m["end"], m["rows"]))
+
+    problems = []
+    actual = _sha256(OUT_CSV)
+    if actual != m["sha256"]:
+        problems.append("sha256 %s attendu, %s trouvé" % (m["sha256"][:16], actual[:16]))
+    if len(df) != m["rows"]:
+        problems.append("%d lignes attendues, %d trouvées" % (m["rows"], len(df)))
+    for col, exp in m["fingerprint"].items():
+        if col not in df.columns:
+            problems.append("colonne %s absente" % col)
+            continue
+        r = df[col].pct_change().dropna()
+        got = round(float((1 + r).prod() ** (12 / len(r)) - 1), 8)
+        if abs(got - exp["cagr"]) > 1e-8:
+            problems.append("%s : CAGR %.6f attendu, %.6f trouvé"
+                            % (col, exp["cagr"], got))
+
+    if problems:
+        print("\n  ÉCHEC :")
+        for p in problems:
+            print("    - %s" % p)
+        raise SystemExit(1)
+    print("  sha256       %s" % m["sha256"])
+    print("\n  OK — le fichier est identique à sa version gelée.")
+    for col, exp in m["fingerprint"].items():
+        print("    %-6s CAGR %6.2f%%  vol %5.2f%%"
+              % (col, exp["cagr"] * 100, exp["vol"] * 100))
+
+
+def assert_history_unchanged(existing, candidate, rtol=1e-5):
+    """Refuse a refresh that would materially rewrite an already published month.
+
+    Months already in the dataset are frozen: they have been audited, cited and
+    committed. A provider revising its history, or a silent fallback to a
+    different index, must surface as a refusal rather than as a quiet edit.
+
+    The comparison is RELATIVE, not exact, because dividend-adjusted prices are
+    not bit-reproducible: Yahoo re-derives its adjustment factors on every
+    request, which moves a level of ~2000 by ~1e-4 in absolute terms (8e-8
+    relative, measured up to 1.4e-6 on AGG). Requiring exact equality would
+    flag that noise on every run and train the reader to ignore the guard.
+
+    The threshold is 1e-5 relative -- 0.001%, a tenth of a basis point. That is
+    about seven times the observed noise and two orders of magnitude below
+    anything economically meaningful: the MSCI-to-ACWX substitution, by way of
+    comparison, moved the series by roughly 0.5% a year.
+    """
+    shared = existing.index.intersection(candidate.index)
+    old = existing.loc[shared]
+    new = candidate.loc[shared].reindex(columns=old.columns)
+    scale = old.abs().where(old.abs() > 0, 1.0)
+    drift = (new - old).abs() / scale
+    diff = drift > rtol
+    if not diff.to_numpy().any():
+        worst = float(drift.to_numpy().max()) if len(shared) else 0.0
+        print("   dérive maximale sur l'historique : %.1e (seuil %.0e)"
+              % (worst, rtol))
+        return len(shared)
+
+    print("\nREFUS : le rafraîchissement modifierait des mois déjà publiés.")
+    rows = diff.any(axis=1)
+    for date in existing.index[rows][:10]:
+        for col in existing.columns:
+            if diff.loc[date, col]:
+                print("  %s  %-6s  %.6f -> %.6f"
+                      % (date.date(), col, old.loc[date, col], new.loc[date, col]))
+    total = int(rows.sum())
+    if total > 10:
+        print("  ... et %d autre(s) mois" % (total - 10))
+    raise SystemExit(
+        "\n%d mois seraient réécrits. L'historique est gelé : si ce changement "
+        "est voulu (fournisseur ayant révisé sa série, ou changement de source "
+        "assumé), relancer avec --rebuild --force et le documenter." % total)
 
 
 def build_components(df, segments, live_raw):
@@ -562,6 +716,75 @@ def _write_sources(df, core, repairs, notes):
 
     with open(os.path.join(DATA_DIR, "SOURCES.md"), "w", encoding="utf-8") as fh:
         fh.write("\n".join(out) + "\n")
+
+
+USAGE = """\
+Usage: python src/build_dataset.py [--verify | --refresh | --rebuild [--force]]
+
+  --verify   (défaut) contrôle hors ligne le dataset gelé contre son manifeste.
+             N'écrit rien, n'appelle rien.
+  --refresh  n'AJOUTE que les mois nouveaux. Refuse d'écrire si un mois déjà
+             publié change de valeur.
+  --rebuild  reconstruit tout depuis les sources. Refuse d'écraser un dataset
+             existant sans --force.
+
+Le dataset est un artefact versionné, pas une sortie de build : `gem_backtest.py`
+lit le CSV et n'accède jamais au réseau.
+"""
+
+
+def main():
+    args = sys.argv[1:]
+    unknown = [a for a in args if a not in
+               ("--verify", "--refresh", "--rebuild", "--force", "-h", "--help")]
+    if unknown or "-h" in args or "--help" in args:
+        if unknown:
+            print("argument inconnu : %s\n" % " ".join(unknown))
+        raise SystemExit(USAGE)
+
+    os.makedirs(DATA_DIR, exist_ok=True)
+    force = "--force" in args
+
+    if "--rebuild" in args:
+        if os.path.exists(OUT_CSV) and not force:
+            raise SystemExit(
+                "%s existe déjà.\nLe dataset est gelé : utiliser --refresh pour "
+                "ajouter les mois nouveaux, ou --rebuild --force pour tout "
+                "réécrire délibérément." % OUT_CSV)
+        print("MODE rebuild — reconstruction complète depuis les sources\n")
+        df, core, repairs, notes, live_raw = build_panel()
+        print("\n5. Écriture")
+        write_outputs(df, core, repairs, notes, live_raw)
+        return
+
+    if "--refresh" in args:
+        print("MODE refresh — ajout des mois nouveaux uniquement\n")
+        if not os.path.exists(OUT_CSV):
+            raise SystemExit("%s absent : utiliser --rebuild" % OUT_CSV)
+        existing = pd.read_csv(OUT_CSV, index_col="Date", parse_dates=True)
+        df, core, repairs, notes, live_raw = build_panel()
+
+        print("\n5. Contrôle d'immuabilité")
+        shared = assert_history_unchanged(existing, df)
+        added = df.index.difference(existing.index)
+        print("   %d mois déjà publiés, inchangés" % shared)
+        if not len(added):
+            print("   aucun mois nouveau — rien à écrire")
+            return
+        print("   %d mois ajoutés : %s -> %s"
+              % (len(added), added[0].date(), added[-1].date()))
+
+        # Append-only in the literal sense: published rows are carried over
+        # verbatim from the committed file, never re-derived. Only the new
+        # months come from this build.
+        df = pd.concat([existing, df.loc[added]]).sort_index()
+        df.index.name = "Date"
+
+        print("\n6. Écriture")
+        write_outputs(df, core, repairs, notes, live_raw)
+        return
+
+    verify()
 
 
 if __name__ == "__main__":

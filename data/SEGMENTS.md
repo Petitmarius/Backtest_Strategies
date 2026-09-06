@@ -21,7 +21,7 @@ Les bornes du socle historique ne sont pas reprises d'une documentation : elles 
 |---|---|---|---:|---|---|---|
 | `EXUS-1` | 1969-12-31 | 1987-12-31 | 217 | MSCI World ex USA, gross total return, USD | MSCI | WORLD ex USA (col. C) |
 | `EXUS-2` | 1988-01-31 | 2016-12-31 | 348 | MSCI ACWI ex USA, gross total return, USD | MSCI | ACWI ex USA (col. D) |
-| `EXUS-3` | 2017-01-31 | 2026-07-31 | 115 | MSCI ACWI ex USA via ETF ACWX (net de frais et de retenues) | Yahoo Finance | ACWX, cours ajuste des dividendes |
+| `EXUS-3` | 2017-01-31 | 2026-07-31 | 115 | MSCI ACWI ex USA IMI, gross total return, USD | MSCI (API publique) | index_code 664211 |
 
 ## `BOND` — Obligations agrégées US
 

@@ -27,6 +27,8 @@ src/gem_backtest.py      Backtest, tables et figures
 data/gem_dataset.csv          Jeu maître FORMAT LARGE, 4 séries — entrée du backtest (généré)
 data/gem_dataset_detailed.csv Format long, une ligne par (date, série) avec sa provenance (généré)
 data/gem_dataset_components.csv Format large : composantes brutes + colonne calculée (généré)
+data/gem_dataset.manifest.json Empreinte SHA-256 + statistiques, pour --verify (généré)
+data/README.md                Mode d'emploi du dataset pour un tiers
 data/cache/                   Copies disque des sources live, filet de sécurité (non versionné)
 data/SEGMENTS.md              Carte de provenance segment par segment (généré)
 data/SOURCES.md               Provenance globale, à citer dans le paper (généré)
@@ -41,13 +43,21 @@ changer le script qui les produit et le relancer.
 ## Commandes
 
 ```bash
-python src/build_dataset.py       # reconstruit le dataset (réseau requis, ~1 min)
-python src/validate_dataset.py    # régénère l'audit (réseau requis, ~2 min)
-python src/gem_backtest.py        # backtest + figures + tables (hors ligne)
+python src/build_dataset.py             # --verify (défaut) : contrôle hors ligne
+python src/build_dataset.py --refresh   # ajoute UNIQUEMENT les mois nouveaux
+python src/build_dataset.py --rebuild --force   # tout refaire (geste délibéré)
+python src/validate_dataset.py          # régénère l'audit (réseau, ~2 min)
+python src/gem_backtest.py              # backtest + figures + tables (hors ligne)
 ```
 
+**Le dataset est un artefact gelé, pas une sortie de build.** `--refresh`
+recopie verbatim les mois déjà publiés et n'ajoute que les nouveaux ; si une
+source renvoie une valeur différente pour un mois publié (au-delà de 1e-5 en
+relatif), il refuse d'écrire et affiche les écarts. Ne jamais utiliser
+`--rebuild --force` pour contourner ce refus sans avoir compris la cause.
+
 `gem_backtest.py` lit uniquement le CSV : il tourne sans réseau et de façon
-déterministe. Seuls les deux premiers scripts appellent l'extérieur.
+déterministe.
 
 ## Données
 
@@ -153,17 +163,17 @@ de plus de ~0,1 point doit être expliqué.
 
 | | CAGR | Vol | Sharpe | MaxDD |
 |---|---:|---:|---:|---:|
-| GEM | 15,17 % | 12,81 % | 0,84 | −19,60 % |
+| GEM | 15,18 % | 12,91 % | 0,83 | −21,66 % |
 | S&P 500 | 11,27 % | 15,20 % | 0,50 | −50,95 % |
 
-Alpha annualisé 6,63 % (t = 4,34 Newey-West), bêta 0,57, R² 0,45.
+Alpha annualisé 6,61 % (t = 4,31 Newey-West), bêta 0,57, R² 0,45.
 Décomposition d'Antonacci : momentum absolu seul +77 bps, relatif seul +203 bps,
-combiné +390 bps — les deux briques ne s'additionnent pas, ce qui est le point
+combiné +391 bps — les deux briques ne s'additionnent pas, ce qui est le point
 central de l'article original.
 
 Effet allocation contre effet timing (table 2b) : le mix statique portant la même
-allocation moyenne que GEM (47/28/25, figé, rebalancé mensuellement) fait 10,01 %,
-soit **127 bps de MOINS que le S&P 500**. Le panier d'actifs est donc un handicap
+allocation moyenne que GEM (46/28/25, figé, rebalancé mensuellement) fait 10,03 %,
+soit **124 bps de MOINS que le S&P 500**. Le panier d'actifs est donc un handicap
 sur la période — hors US et obligations ont sous-performé les actions US. La
 totalité des +391 bps vient du timing, qui doit d'abord effacer ce handicap
 (+515 bps bruts). Le drawdown, lui, se partage : −9,0 pt dus à l'allocation,
