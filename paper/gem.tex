@@ -117,15 +117,17 @@ that the combination beats a passive index by a wide margin, with far smaller
 drawdowns. The rule is simple enough to run in a spreadsheet, trades roughly
 once or twice a year, and has been widely adopted.
 
-What is less often examined is \emph{why} it works. The rule combines two
-filters and holds three assets, and the published record does not say how much
-of the result comes from each, or which of its components is doing the work.
-That is the question this paper takes up.
+The strategy's performance has been documented extensively, by its author and
+by others. This paper asks a narrower question: \emph{which part of the rule
+produces that performance?} GEM combines two momentum filters and moves between
+three assets, and those components can be separated and priced individually. We
+do so, and find that the answer is not the one a reader would naturally assume.
 
 We replicate the strategy over 1971--2026 and reproduce the headline result
 closely: 15.18\% a year against 11.27\% for the S\&P 500, a maximum drawdown of
-21.7\% against 51.0\%, and an annualised alpha of 6.61\% with a Newey--West
-$t$-statistic of 4.31. We then decompose it, and two findings emerge.
+21.7\% against 51.0\%, a Sharpe ratio of 0.83 against 0.50, and an annualised
+alpha of 6.61\% with a Newey--West $t$-statistic of 4.31. We then decompose it,
+and two findings emerge.
 
 First, \textbf{the two momentum filters are complements rather than
 substitutes}, and the size of the interaction is larger than is generally
@@ -277,19 +279,24 @@ Three features of Table~\ref{tab:provenance} matter for how the results should
 be read, and none of them is an artefact of using free data --- Antonacci's own
 series have the same breaks.
 
-\textbf{The non-US leg changes universe in 1988.} Before that date it is MSCI
-World ex USA, which covers developed markets only; after it, MSCI ACWI ex USA,
-which adds emerging markets.
+\textbf{The non-US leg is spliced in 1988, by design.} The objective is to
+measure the non-US equity market in full, emerging markets included, since that
+is the opportunity set an investor allocating outside the United States
+actually faces. No index covering emerging markets existed before 1988, so the
+earlier months necessarily use MSCI World ex USA, which is developed markets
+only. MSCI created its Emerging Markets index in 1988 and launched the All
+Country World family in 1990 with history back-calculated to December 1987 ---
+which is precisely where the series switches. From that month the leg uses MSCI
+ACWI ex USA, the broadest measure available.
 
-The discontinuity this creates at the junction itself is negligible. MSCI
-launched its Emerging Markets index in 1988 with ten countries representing
-less than 1\% of world market capitalisation, so in 1988 the two indices were
-measuring almost the same thing, and splicing one onto the other costs
-essentially nothing in return terms. What changes is not the level but the
-trajectory: the emerging-market weight grew steadily, to roughly a quarter of
-the index today. The series is therefore homogeneous where it is spliced and
-progressively less so thereafter, which affects the interpretation of the
-later decades rather than the validity of the join.
+The splice therefore reflects what could be measured at each date rather than a
+compromise. It also costs very little: at inception the emerging-market
+constituents represented less than 1\% of the global opportunity set, so in
+1988 the two indices were measuring nearly the same thing and the join is
+close to seamless in return terms. What changes afterwards is the trajectory,
+not the join --- the emerging-market weight grows steadily, to roughly a
+quarter of the ex-US index today. The consequence is for interpreting the later
+decades, not for the validity of the splice.
 
 \textbf{The bond leg changes nature in 1976.} The Bloomberg Barclays US
 Aggregate does not exist before January 1976. Prior months use a monthly
@@ -366,25 +373,11 @@ results and varied in Section~\ref{sec:robustness}; taxes are not modelled.
 Over the full sample GEM compounded at 15.18\% a year against 11.27\% for the
 S\&P 500, with lower volatility (12.91\% against 15.20\%) and less than half
 the worst drawdown (21.7\% against 51.0\%). Figure~\ref{fig:equity} shows what
-that difference does over fifty-five years: a dollar in GEM ends roughly
-seven times a dollar in the index. Table~\ref{tab:performance} gives the full
-comparison.
-
-The shape of Figure~\ref{fig:drawdowns} matters more than the headline number.
-GEM's drawdowns are not simply smaller versions of the index's; they are
-different events. The S\&P 500 has four episodes beyond 30\% --- 1973--74,
-2000--02, 2007--09 and 2020 --- and GEM avoids the worst of all four. Its own
-deepest loss comes from somewhere else entirely, and we return to it in
-Section~\ref{sec:limitations}.
-
-Two features of Table~\ref{tab:performance} are worth pausing on. The
-improvement is concentrated in the left tail: GEM's worst month is $-14.5$\%
-against $-21.5$\% for the index, and its fifth-percentile monthly return is
-$-4.8$\% against $-6.4$\%. That is what an absolute momentum filter is for --- it
-does not make good months better, it makes bad months rarer and shallower. And
-the strategy is positive in 67\% of months against 63\% for the index, a small
-edge in frequency that compounds precisely because the losing months are so
-much less severe.
+a difference of 3.9 points a year does when it is compounded over fifty-five
+years: \$100 invested in GEM in January 1971 becomes \$258{,}057 by July 2026,
+against \$37{,}908 for the same \$100 left in the index --- close to seven
+times as much, from a strategy that traded 1.5 times a year on average.
+Table~\ref{tab:performance} gives the full comparison.
 
 \begin{figure}[htbp]
   \centering
@@ -400,12 +393,28 @@ much less severe.
   \label{fig:drawdowns}
 \end{figure}
 
+The shape of Figure~\ref{fig:drawdowns} matters more than the headline number.
+GEM's drawdowns are not simply smaller versions of the index's; they are
+different events. The S\&P 500 has four episodes beyond 30\% --- 1973--74,
+2000--02, 2007--09 and 2020 --- and GEM avoids the worst of all four. Its own
+deepest loss comes from somewhere else entirely, and we return to it in
+Section~\ref{sec:limitations}.
+
 \begin{table}[htbp]
   \centering
   \caption{Performance, January 1971 to July 2026.}
   \label{tab:performance}
   \input{tables/t3_performance}
 \end{table}
+
+Two features of Table~\ref{tab:performance} are worth pausing on. The
+improvement is concentrated in the left tail: GEM's worst month is $-14.5$\%
+against $-21.5$\% for the index, and its fifth-percentile monthly return is
+$-4.8$\% against $-6.4$\%. That is what an absolute momentum filter is for --- it
+does not make good months better, it makes bad months rarer and shallower. And
+the strategy is positive in 67\% of months against 63\% for the index, a small
+edge in frequency that compounds precisely because the losing months are so
+much less severe.
 
 \subsection{Where the return comes from}
 
@@ -667,11 +676,10 @@ entirely in the period when that correlation held.
 \subsection{Data and specification caveats}
 
 \textbf{The series are not fully homogeneous.} As Table~\ref{tab:provenance}
-sets out, the non-US leg changes universe in 1988 and the bond leg changes
-construction in 1976. Neither join is itself material --- emerging markets were
-under 1\% of world market capitalisation in 1988 --- but the emerging-market
-weight grows afterwards, so the later decades measure a somewhat different
-asset from the earlier ones.
+sets out, the non-US leg is spliced in 1988 and the bond leg in 1976. Neither
+join is itself material --- emerging markets were under 1\% of the global
+opportunity set in 1988 --- but the emerging-market weight grows afterwards, so
+the later decades measure a somewhat broader asset than the earlier ones.
 
 \textbf{The historical core is a redistribution.} It is audited against nine
 independent references in Appendix~\ref{app:audit}, and one real defect was
