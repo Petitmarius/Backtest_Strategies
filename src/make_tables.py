@@ -236,9 +236,12 @@ HEADER_SHORT = {
 
 
 def table_from_csv(csv_name, columns=None, rows=None, note=None,
-                   index_label=" "):
+                   index_label=" ", drop=()):
     """Generic: a computed CSV rendered with its rows as they stand."""
     df = pd.read_csv(os.path.join(TAB_DIR, csv_name), index_col=0)
+    if drop:
+        df = df[[c for c in df.columns
+                 if not any(c.startswith(d) for d in drop)]]
     if columns:
         df = df[columns]
     if rows:
@@ -273,8 +276,12 @@ def main():
     write("t2_summary.tex", table_summary())
     write("ta1_audit.tex", table_audit())
 
+    # Antonacci's GAA benchmark (45/28/27) is within a point of our own
+    # derived static mix (46/28/25) on every weight, so showing both would put
+    # two near-identical columns side by side. The coincidence is worth a
+    # sentence in the text, not a column.
     write("t3_performance.tex", table_from_csv(
-        "01_performance.csv",
+        "01_performance.csv", drop=("GAA",),
         rows=["CAGR", "Volatility", "Sharpe", "Sortino", "Max drawdown",
               "Calmar (MAR)", "Worst month", "Monthly VaR 5%",
               "Positive months", "Excess return t-stat (NW)"],

@@ -21,6 +21,7 @@
 \usepackage{natbib}
 \usepackage{xcolor}
 \usepackage{changepage}          % adjustwidth, for the abstract block
+\usepackage{placeins}            % FloatBarrier, see below
 \usepackage[hidelinks]{hyperref}
 
 \graphicspath{{../output/figures/}}
@@ -34,6 +35,14 @@
 \renewcommand{\topfraction}{0.9}
 \renewcommand{\textfraction}{0.08}
 \renewcommand{\floatpagefraction}{0.8}
+
+% A float may drift within its own subsection but never past it. Without this
+% barrier a table discussed in one subsection lands in the next, which defeats
+% the point of reading each exhibit where it is discussed.
+\let\oldsubsection\subsection
+\renewcommand{\subsection}{\FloatBarrier\oldsubsection}
+\let\oldsection\section
+\renewcommand{\section}{\FloatBarrier\oldsection}
 
 \begin{document}
 
@@ -435,6 +444,19 @@ Together they add 391 basis points. That is the result worth stating carefully,
 because $77 + 203 = 280$, not 391. \textbf{The two filters are not additive.}
 The combination earns 111 basis points a year that neither half earns alone.
 
+The gain is not confined to return, and this is what makes the combination more
+than a convenient pairing. Each filter has a weakness the other does not share:
+absolute momentum controls risk but adds little return, relative momentum adds
+return but controls no risk. Run together, GEM improves on \emph{both} halves in
+\emph{both} dimensions at once. Its 15.18\% exceeds the better of the two
+(13.31\% for relative momentum). Its maximum drawdown of 21.7\% is smaller than
+the better of the two (29.6\% for absolute momentum). And its volatility of
+12.91\% sits near the lower of the two rather than the average, three points
+below relative momentum's 15.96\%. There is no trade-off being made here: the
+combined rule dominates each of its parts on return, on drawdown and on
+volatility simultaneously, which is why the Sharpe ratio rises to 0.83 against
+0.64 and 0.60 for the halves.
+
 The mechanism is visible in what the filters do to each other. Relative
 momentum's weakness is that ranking always returns an answer: in 2008 it had to
 choose between two collapsing markets. The absolute filter removes that
@@ -462,7 +484,10 @@ because the index is a single asset and GEM is three.
 Table~\ref{tab:timing} separates them with a benchmark carrying GEM's own
 average allocation --- 46\% US equity, 28\% non-US, 25\% bonds --- held fixed
 and rebalanced monthly. The weights are read off the backtest, not chosen: they
-are what the rule actually did, with the timing removed.
+are what the rule actually did, with the timing removed. They land within a
+percentage point on every leg of the 45/28/27 global allocation benchmark that
+\citet{antonacci2018} uses for the same purpose, which suggests he calibrated
+his on the strategy's realised allocation as well.
 
 The result is not what a diversification argument would predict. That static
 mix returned 10.03\% a year, \emph{below} the S\&P 500's 11.27\%. Over this
