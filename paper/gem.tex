@@ -1,8 +1,10 @@
 % Global Equities Momentum -- replication on free data
 %
 % Build:  tectonic -X compile paper/gem.tex
-% Figures are pulled as vector PDFs from ../output/figures, so the paper always
-% shows the exhibits the current code produces. Never edit a figure by hand.
+% Figures come as vector PDFs from ../output/figures and tables as generated
+% fragments from ./tables, so the paper always shows what the current code
+% produces. Never edit a figure or a table by hand: change the code and re-run
+% src/gem_backtest.py, src/paper_exhibits.py and src/make_tables.py.
 
 \documentclass[11pt,a4paper]{article}
 
@@ -14,7 +16,6 @@
 \usepackage{booktabs}
 \usepackage{amsmath}
 \usepackage{amssymb}
-\usepackage{siunitx}
 \usepackage[font=small,labelfont=bf,skip=6pt]{caption}
 \usepackage{microtype}
 \usepackage{natbib}
@@ -22,27 +23,25 @@
 \usepackage[hidelinks]{hyperref}
 
 \graphicspath{{../output/figures/}}
-\bibliographystyle{apalike}
-
-\sisetup{detect-all, group-separator={,}, table-align-text-after=false}
+\bibliographystyle{plainnat}
 
 \setlength{\parskip}{0.45em}
 \setlength{\parindent}{0pt}
 \renewcommand{\arraystretch}{1.12}
 
-% Figures and tables are read where they appear, so keep them near their text.
+% Exhibits are read where they appear, so keep them close to their text.
 \renewcommand{\topfraction}{0.9}
 \renewcommand{\textfraction}{0.08}
 \renewcommand{\floatpagefraction}{0.8}
 
-\newcommand{\pct}[1]{\SI{#1}{\percent}}
-
 \title{\textbf{Global Equities Momentum on Free Data}\\[0.35em]
-       \large A Replication and Extension of Antonacci's Dual Momentum,
-       1971--2026}
+       \large A Replication of Antonacci's Dual Momentum, 1971--2026}
 
-\author{AUTHOR NAME\thanks{Affiliation. Code and data:
-        \url{https://github.com/Petitmarius/Backtest_Strategies}}}
+\author{Marius Petit\thanks{Student in Financial Markets, EDHEC Business
+        School. This is independent work, carried out on the author's own
+        account; it is not affiliated with, funded by, or endorsed by EDHEC
+        Business School. All code and data are public:
+        \url{https://github.com/Petitmarius/Backtest_Strategies}.}}
 
 \date{\today}
 
@@ -61,31 +60,194 @@ market timing, replication.
 \section{Introduction}
 TODO --- written last.
 
+% =====================================================================
 \section{The Strategy}
 \label{sec:strategy}
-TODO.
+
+Momentum is the tendency of an asset that has performed well to go on
+performing well. It comes in two forms that are often conflated but that answer
+different questions, and Global Equities Momentum is built on the distinction
+between them.
+
+\textbf{Relative momentum} is cross-sectional. It ranks assets against one
+another and holds the winners. This is the effect documented by
+\citet{jegadeesh1993} for individual US stocks, and since found across
+industries, countries, asset classes and centuries. It answers the question
+\emph{which asset?} and, by construction, it is always invested in something:
+ranking cannot tell you that everything on the list is a bad idea.
+
+\textbf{Absolute momentum} --- also called time-series momentum
+\citep{moskowitz2012} --- compares an asset with its own past rather than with
+its peers. If the trailing return exceeds the return on cash, the trend is up
+and the asset is held; otherwise it is not. This answers a different question,
+\emph{should we be invested at all?}, and it is the only one of the two that
+can take risk off the table.
+
+\citet{antonacci2016} combines the two into a single rule he calls Global
+Equities Momentum. The insight is that the two filters are complements rather
+than substitutes, and that the order in which they are applied matters. The
+absolute test acts as a gate: only when equities are trending up does the
+relative test get to choose between them. Figure~\ref{fig:rule} states the rule
+in full.
 
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=\textwidth]{00_decision_rule.pdf}
   \caption{The Global Equities Momentum decision rule. Absolute momentum
   decides whether to hold equities at all; relative momentum decides which.
-  Percentages give the share of months spent in each branch over
-  1971--2026.}
+  Percentages give the share of months spent in each branch over 1971--2026.}
   \label{fig:rule}
 \end{figure}
 
+The strategy uses four building blocks: US equity, non-US equity, US aggregate
+bonds and Treasury bills. Equities are the assets to be held; bonds are the
+refuge when the absolute test fails; T-bills are not held at all but serve as
+the hurdle rate that the absolute test measures against. The lookback for both
+tests is twelve months, and the rule is evaluated once a month.
+
+Two design choices in that rule deserve to be stated explicitly, because they
+are what separate GEM from a generic trend-following system.
+
+The first is that \textbf{the absolute test is applied to US equity alone}, not
+to whichever equity market the relative test would have chosen. The US market
+serves as the bellwether for global equity risk. This is a simplification, and
+it means the strategy can hold ex-US equity in a month when ex-US equity is
+itself falling, provided the US market is not.
+
+The second is that \textbf{the escape asset is aggregate bonds, not cash}, even
+though the hurdle is measured against cash. When equities fail the absolute
+test, the strategy does not sit in T-bills; it takes duration and credit risk
+instead. Over the sample this choice adds return, but it also means the
+defensive position is not risk-free: it lost value in 2022, when bonds and
+equities fell together.
+
+% =====================================================================
 \section{Data and Methodology}
 \label{sec:data}
-TODO.
+
+\subsection{The data problem}
+
+Replicating GEM requires four monthly total-return series reaching back far
+enough to include more than one full market cycle. \citet{antonacci2018} builds
+his from the S\&P 500, MSCI indices for the non-US leg, Global Financial Data
+before MSCI begins, the Bloomberg Barclays US Aggregate for bonds, and Ibbotson
+series before the Aggregate exists. Every one of those is a paid subscription.
+A reader without a data budget --- which is to say most readers --- cannot check
+the result.
+
+This paper imposes the opposite constraint: \textbf{every series is built from
+free, publicly accessible sources}. That is a restriction, and it costs
+something in coverage, as set out below. But it buys the property that matters
+most for a replication: anyone can rebuild the dataset, or verify the one we
+publish, at no cost.
+
+\subsection{The four series}
+
+The dataset holds four monthly total-return index levels in US dollars, from
+December 1969 to July 2026 --- 680 observations. Table~\ref{tab:provenance}
+records where each one comes from, and Figure~\ref{fig:provenance} shows the
+same information as a timeline.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Provenance of each series. Each leg is a chain of vendor series,
+  not a single index.}
+  \label{tab:provenance}
+  \input{tables/t1_provenance}
+\end{table}
 
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=\textwidth]{09_provenance.pdf}
-  \caption{Provenance of each series over time.}
+  \caption{Provenance of each series over time. Dotted lines mark the months
+  in which a leg changes source.}
   \label{fig:provenance}
 \end{figure}
 
+The historical core, running to December 2016, comes from a public CSV
+redistributed on GitHub that reproduces Antonacci's own construction. It is
+extended to the present with Yahoo Finance, MSCI's public index endpoint and
+the \citet{frenchdata} library. The splice is a change of base only: the live
+series is multiplied by a constant so that it coincides with the core in the
+junction month, which leaves every monthly return on both sides untouched.
+
+Three features of Table~\ref{tab:provenance} matter for how the results should
+be read, and none of them is an artefact of using free data --- Antonacci's own
+series have the same breaks.
+
+\textbf{The non-US leg changes universe in 1988.} Before that date it is MSCI
+World ex USA, which covers developed markets only; after it, MSCI ACWI ex USA,
+which adds emerging markets. Emerging markets are roughly a quarter of the
+index today. The series is therefore not homogeneous across the sample: its
+volatility and its country composition both shift at that point.
+
+\textbf{The bond leg changes nature in 1976.} The Bloomberg Barclays US
+Aggregate does not exist before January 1976. Prior months use a monthly
+rebalanced blend of 40\% intermediate Treasuries and 60\% intermediate
+corporates. The Aggregate includes securitised debt and carries a different
+duration, so the pre-1976 and post-1976 halves of that leg are related but not
+identical.
+
+\textbf{The US leg changes provider but not index.} The Ibbotson large-cap
+series and the S\&P 500 total return series measure the same thing; the 2013
+handover has no economic content.
+
+Table~\ref{tab:summary} gives the statistical properties of the four inputs
+before any strategy is applied to them.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Summary statistics of the four input series.}
+  \label{tab:summary}
+  \input{tables/t2_summary}
+\end{table}
+
+Two things in that table shape everything that follows. US equity outperformed
+non-US equity by 1.6 percentage points a year over the sample while being
+\emph{less} volatile, which means the strategy's non-US leg starts at a
+disadvantage. And both equity legs lost more than half their value at their
+worst, against 17\% for bonds, which is the drawdown the absolute momentum
+filter exists to avoid.
+
+\subsection{Verification}
+
+Because the historical core is a redistributed file rather than a primary
+source, each of the four series was checked against independent providers over
+every month they have in common: nine comparisons in all, with correlations
+between 0.96 and 0.9999. The audit found one genuine defect --- three
+observations in the T-bill leg had lost their leading digit --- which is
+corrected before use. Appendix~\ref{app:audit} gives the full apparatus and the
+repair.
+
+\subsection{Implementation}
+
+At the close of month $t$ the trailing twelve-month total return is computed for
+US equity, non-US equity and T-bills. The rule of Figure~\ref{fig:rule} selects
+one asset, and that position earns the return of month $t+1$. Formally, with
+$P_{i,t}$ the level of series $i$ at month-end $t$, the signal is
+\[
+  R_{i,t} \;=\; \frac{P_{i,t}}{P_{i,t-12}} - 1 ,
+\]
+and the asset chosen on $R_{\cdot,t}$ is held through month $t+1$. No quantity
+dated $t+1$ enters the decision, so the backtest is free of look-ahead bias by
+construction rather than by inspection. The first signal uses December 1970, so
+the results begin in January 1971 and run for 667 months.
+
+The strategy is compared with four benchmarks: the S\&P 500 alone; non-US
+equity alone; a 60/40 portfolio; and a static mix carrying GEM's own average
+allocation, rebalanced monthly. That last benchmark is the one that separates
+what the strategy earns from holding a diversified basket from what it earns by
+switching between its parts, and Section~\ref{sec:results} uses it for exactly
+that.
+
+Monthly returns from a momentum rule are autocorrelated, because the rule holds
+the same asset for months at a time. An ordinary $t$-test would therefore
+overstate significance. All $t$-statistics reported here use
+\citet{newey1987} standard errors with a Bartlett kernel and the automatic
+bandwidth $4(T/100)^{2/9}$. Transaction costs are set to zero in the headline
+results and varied in Section~\ref{sec:robustness}; taxes are not modelled.
+
+% =====================================================================
 \section{Results}
 \label{sec:results}
 
@@ -106,11 +268,32 @@ TODO.
   \label{fig:drawdowns}
 \end{figure}
 
+\begin{table}[htbp]
+  \centering
+  \caption{Performance, January 1971 to July 2026.}
+  \label{tab:performance}
+  \input{tables/t3_performance}
+\end{table}
+
 \subsection{Where the return comes from}
 TODO.
 
+\begin{table}[htbp]
+  \centering
+  \caption{Decomposition: what each momentum filter contributes.}
+  \label{tab:decomposition}
+  \input{tables/t4_decomposition}
+\end{table}
+
 \subsection{Allocation or timing?}
 TODO.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Allocation effect versus timing effect.}
+  \label{tab:timing}
+  \input{tables/t5_allocation_timing}
+\end{table}
 
 \subsection{Risk-adjusted performance}
 TODO.
@@ -139,6 +322,14 @@ TODO.
   \label{fig:rolling}
 \end{figure}
 
+\begin{table}[htbp]
+  \centering
+  \caption{Performance by decade.}
+  \label{tab:decades}
+  \input{tables/t7_decades}
+\end{table}
+
+% =====================================================================
 \section{Robustness}
 \label{sec:robustness}
 TODO.
@@ -150,6 +341,7 @@ TODO.
   \label{fig:lookback}
 \end{figure}
 
+% =====================================================================
 \section{Limitations and Discussion}
 \label{sec:limitations}
 TODO.
@@ -160,9 +352,17 @@ TODO.
 
 \bibliography{references}
 
+% =====================================================================
 \appendix
 \section{Independent Verification of the Dataset}
 \label{app:audit}
 TODO.
+
+\begin{table}[htbp]
+  \centering
+  \caption{The dataset against independent sources.}
+  \label{tab:audit}
+  \input{tables/ta1_audit}
+\end{table}
 
 \end{document}

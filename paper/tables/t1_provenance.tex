@@ -1,0 +1,22 @@
+\small
+\begin{tabular}{lllll}
+\toprule
+Series & From & To & Index measured & Provider \\
+\midrule
+\textbf{US equity} & 1969-12 & 2012-12 & Ibbotson US Large Cap & Ibbotson SBBI \\
+ & 2013-01 & 2016-12 & S\&P 500 Total Return & Yahoo Finance \\
+ & 2017-01 & 2026-07 & S\&P 500 Total Return & Yahoo Finance \\
+\addlinespace \\
+\textbf{Ex-US equity} & 1969-12 & 1987-12 & MSCI World ex USA, gross & MSCI \\
+ & 1988-01 & 2016-12 & MSCI ACWI ex USA, gross & MSCI \\
+ & 2017-01 & 2026-07 & MSCI ACWI ex USA IMI, gross & MSCI \\
+\addlinespace \\
+\textbf{US aggregate bonds} & 1969-12 & 1975-12 & 40/60 intermediate govt/corp. & Ibbotson SBBI \\
+ & 1976-01 & 2016-12 & Bloomberg US Aggregate Bond & Morningstar \\
+ & 2017-01 & 2026-07 & Bloomberg US Aggregate Bond & Yahoo Finance (AGG) \\
+\addlinespace \\
+\textbf{T-bills} & 1969-12 & 2026-07 & US 1-month Treasury bill & Kenneth French \\
+\bottomrule
+\end{tabular}
+\\[0.4em]
+\begin{minipage}{\linewidth}\footnotesize Segment boundaries were recovered from the source file itself, by locating the contiguous span over which the ratio of the spliced series to a candidate component is constant, and confirming against the month in which the incoming component is rebased. The T-bill leg is a single continuous source and is not spliced.\end{minipage}
