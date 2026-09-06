@@ -180,6 +180,26 @@ def main():
          ((1 + spx.loc["2022"]).prod() - 1) * 100, -18.1, 0.1),
     ]
 
+    y25 = held.loc["2025"]
+    prior = held.loc[:"2024-12-31"].iloc[-1]
+    seq = pd.concat([pd.Series([prior], index=[pd.Timestamp("2024-12-31")]), y25])
+    mom = px / px.shift(12) - 1
+    switch_months = seq[seq != seq.shift()].index[1:]
+    gaps = [abs(mom.iloc[mom.index.get_loc(d) - 1]["US"]
+                - mom.iloc[mom.index.get_loc(d) - 1]["EXUS"]) * 100
+            for d in switch_months]
+    checks += [
+        ("6.1", "GEM 16.30% in 2025",
+         ((1 + gem.loc["2025"]).prod() - 1) * 100, 16.30, 0.02),
+        ("6.1", "US equity 17.88% in 2025",
+         ((1 + spx.loc["2025"]).prod() - 1) * 100, 17.88, 0.02),
+        ("6.1", "non-US equity 32.67% in 2025",
+         ((1 + rets["EXUS"].loc["2025"]).prod() - 1) * 100, 32.67, 0.02),
+        ("6.1", "five switches in 2025", len(switch_months), 5, 0),
+        ("6.1", "four of five switches inside 1.1 points",
+         sum(1 for g in gaps if g <= 1.1), 4, 0),
+    ]
+
     bear = [("1973-01", "1975-06", 83), ("2000-06", "2003-06", 84),
             ("2007-06", "2009-12", 68)]
     for lo, hi, expected in bear:
