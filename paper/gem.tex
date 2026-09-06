@@ -639,6 +639,13 @@ window from three to twenty-four months. Across that range the CAGR runs from
 S\&P 500's 11.27\%. The strategy is therefore not fragile in the sense of
 working at one setting and failing at the others.
 
+\begin{table}[!ht]
+  \centering
+  \caption{Robustness to the momentum lookback window.}
+  \label{tab:lookback}
+  \input{tables/t7_lookback}
+\end{table}
+
 But the twelve-month window is \textbf{the maximum of the grid}, and that
 should be said plainly rather than buried. Antonacci's chosen parameter is the
 best-performing one out of twenty-two tested here. Some of that is real ---
@@ -652,13 +659,6 @@ $-28.3$\%, and its variation across windows looks considerably more like noise
 than the return does: adjacent settings differ by six points with no pattern.
 The risk reduction GEM delivers is real but its magnitude is not precisely
 estimated.
-
-\begin{table}[!ht]
-  \centering
-  \caption{Robustness to the momentum lookback window.}
-  \label{tab:lookback}
-  \input{tables/t7_lookback}
-\end{table}
 
 \subsection{Transaction costs}
 
@@ -794,6 +794,13 @@ is not a primary source, so it cannot simply be trusted. Our own repaired and
 extended version, together with the audit code described below, is published at
 \citet{petit2026data}.
 
+\begin{table}[!ht]
+  \centering
+  \caption{The dataset against independent sources.}
+  \label{tab:audit}
+  \input{tables/ta1_audit}
+\end{table}
+
 Each of the four series was therefore rebuilt from providers with no connection
 to that file, and the two were compared over every month they have in common.
 Table~\ref{tab:audit} reports the nine comparisons. Correlations of monthly
@@ -846,12 +853,5 @@ percentage points a year over 1970--2012 and is correct where the file is not,
 so it is used for the whole sample. This removes both a splice and a defect. Its
 effect on the strategy is nil: no allocation decision changes in any of the 667
 months.
-
-\begin{table}[htbp]
-  \centering
-  \caption{The dataset against independent sources.}
-  \label{tab:audit}
-  \input{tables/ta1_audit}
-\end{table}
 
 \end{document}
