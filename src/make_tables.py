@@ -88,7 +88,7 @@ def table_provenance():
         "EXUS": ("2017-01", "2026-07",
                  "MSCI ACWI ex USA IMI, gross", "MSCI"),
         "BOND": ("2017-01", "2026-07",
-                 "Bloomberg US Aggregate Bond", "Yahoo Finance (AGG)"),
+                 "Bloomberg US Aggregate", "Yahoo Finance (AGG)"),
     }
     names = {"US": "US equity", "EXUS": "Ex-US equity",
              "BOND": "US aggregate bonds", "TBILL": "T-bills"}
@@ -133,7 +133,7 @@ def _trim(name):
         ("MSCI World ex USA, gross total return, USD", "MSCI World ex USA, gross"),
         ("MSCI ACWI ex USA, gross total return, USD", "MSCI ACWI ex USA, gross"),
         ("Bloomberg Barclays US Aggregate Bond, total return",
-         "Bloomberg US Aggregate Bond"),
+         "Bloomberg US Aggregate"),
         ("40% Ibbotson Intermediate Treasuries + 60% Ibbotson Intermediate "
          "Corporates, rebalanced monthly",
          "40/60 intermediate govt/corp."),
