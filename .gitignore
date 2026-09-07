@@ -15,3 +15,6 @@ research_paper/*.log
 research_paper/*.bbl
 research_paper/*.blg
 research_paper/*.out
+
+# Instructions de projet, locales
+CLAUDE.md

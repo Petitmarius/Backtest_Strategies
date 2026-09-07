@@ -90,7 +90,10 @@
   {\Large Marius Petit\footnotemark[1]\par}
 
   \vspace{1.6em}
-  {\normalsize \today\par}
+  % Fixed, never \today: the version date of a working paper must not change
+  % every time the file happens to be recompiled. Edit it deliberately when a
+  % new version is released.
+  {\normalsize 6 September 2026\par}
 \end{center}
 \vspace{1.4em}
 
@@ -130,6 +133,10 @@ year since 2010, and its deepest drawdown in fifty-five years occurred in
 \noindent\footnotesize\textbf{\textit{Keywords:}} \textit{Dual Momentum, Global
 Equities Momentum, Absolute Momentum, Relative Momentum, Tactical Asset
 Allocation, Market Timing, Replication}
+
+\vspace{0.35em}
+\noindent\footnotesize\textbf{\textit{JEL classification:}} \textit{G11, G12,
+G14}
 \end{adjustwidth}
 
 \footnotetext[1]{Student in Financial Markets, EDHEC Business School. This is
@@ -211,7 +218,8 @@ between them.
 \textbf{Relative momentum} is cross-sectional. It ranks assets against one
 another and holds the winners. This is the effect documented by
 \citet{jegadeesh1993} for individual US stocks, and since found across
-industries, countries, asset classes and centuries. It answers the question
+industries, countries, asset classes and centuries
+\citep{asness2013}. It answers the question
 \emph{which asset?} and, by construction, it is always invested in something:
 ranking cannot tell you that everything on the list is a bad idea.
 
@@ -223,8 +231,9 @@ and the asset is held; otherwise it is not. This answers a different question,
 can take risk off the table.
 
 \citet{antonacci2016} combines the two into a single rule he calls Global
-Equities Momentum. The insight is that the two filters are complements rather
-than substitutes, and that the order in which they are applied matters. The
+Equities Momentum, set out at book length in \citet{antonacci2014}. The insight
+is that the two filters are complements rather than substitutes, and that the
+order in which they are applied matters. The
 absolute test acts as a gate: only when equities are trending up does the
 relative test get to choose between them. Figure~\ref{fig:rule} states the rule
 in full.
@@ -455,6 +464,15 @@ does not make good months better, it makes bad months rarer and shallower. And
 the strategy is positive in 67\% of months against 63\% for the index, a small
 edge in frequency that compounds precisely because the losing months are so
 much less severe.
+
+These figures survive an external check.
+% Quoted from Link, not recomputed here, hence absent from
+% src/check_paper_numbers.py.
+\citet{link2025} runs the same rule over 1970--2025 from an unrelated data
+chain and reports 14.8\% a year with a maximum drawdown of $-20.5$\%, against
+15.18\% and $-21.7$\% here. Two reconstructions sharing no data source and
+landing four tenths of a point apart is evidence that neither is an artefact of
+the series it was built from.
 
 \subsection{Where the return comes from}
 
