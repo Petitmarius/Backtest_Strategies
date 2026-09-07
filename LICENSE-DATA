@@ -2,6 +2,10 @@ Creative Commons Attribution 4.0 International (CC BY 4.0)
 
 Copyright (c) 2026 Marius Petit
 
+Scope: the MIT License in LICENSE covers the source code in `src/` and the
+LaTeX sources in `research_paper/`. This file covers everything else described
+below.
+
 The assembled dataset in `data/`, the figures and tables in `output/`, and the
 provenance and audit documentation accompanying them are licensed under the
 Creative Commons Attribution 4.0 International License.
