@@ -141,18 +141,13 @@ that the combination beats a passive index by a wide margin, with far smaller
 drawdowns. The rule is simple enough to run in a spreadsheet, trades roughly
 once or twice a year, and has been widely adopted.
 
-The strategy's performance has been documented extensively, by its author and
-by others. This paper takes that record as its starting point and asks three
-questions of it. \emph{Which part of the rule produces the performance?} GEM
-combines two momentum filters and moves between three assets, and those
-components can be separated and priced individually. \emph{How much of the
-result is the basket of assets rather than the decision to move between them?}
-The rule diversifies and it times, and the two can be measured against each
-other. \emph{And how much of it survives the choices the backtest had to
-make} --- the length of the lookback window, the cost of trading, and the
-sixteen years that have passed since the rule was published? The three answers
-do not point the same way, and none of them is quite the one a reader would
-naturally assume.
+That record is well established. What produces it is not. A backtest reports
+\emph{that} a rule worked, and GEM's has been reported many times; it does not
+say \emph{which} of the rule's parts did the work, and that distinction decides
+how much weight the record deserves. A return earned by holding a diversified
+basket is structural and should persist; one earned by switching between assets
+at the right moment depends on the future resembling the past. GEM does both,
+and the two can be separated. This paper separates them.
 
 We replicate the strategy over 1971--2026 and reproduce the headline result
 closely: 15.18\% a year against 11.27\% for the S\&P 500, a maximum drawdown of
@@ -288,7 +283,7 @@ reported here can be tied to an exact file.} Table~\ref{tab:provenance} records
 where each one comes from, and Figure~\ref{fig:provenance} shows the same
 information as a timeline.
 
-\begin{table}[htbp]
+\begin{table}[!ht]
   \centering
   \caption{Provenance of each series. Each leg is a chain of vendor series,
   not a single index.}
@@ -301,7 +296,9 @@ information as a timeline.
 % barrier the full-width figure below gets placed a page ahead of the table
 % above it, and which of the two comes first flips whenever the surrounding
 % text is edited. The barrier forces the table out before the figure is
-% considered, which is the only way to fix their relative order.
+% considered, which is the only way to fix their relative order. The table
+% above also drops the b and p options for the same reason: they are what let
+% it drift to the foot of a page or onto a float page of its own.
 \FloatBarrier
 
 \begin{figure}[htbp]
