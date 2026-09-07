@@ -1,89 +1,89 @@
-# Jeu de données GEM — 1969-12 à 2026-07
+# GEM dataset — 1969-12 to 2026-07
 
-Quatre séries mensuelles de **niveaux d'indices en rendement total, en USD**,
-construites uniquement à partir de sources gratuites.
+Four monthly series of **total-return index levels, in USD**, built entirely
+from free sources.
 
-**Le dataset est gelé.** Ce n'est pas une sortie de build qu'il faut régénérer :
-c'est un artefact versionné, avec son empreinte. Vous pouvez l'utiliser tel quel,
-sans réseau, sans clé d'API, sans rien reconstruire.
+**The dataset is frozen.** It is not a build output waiting to be regenerated:
+it is a versioned artefact with a fingerprint. You can use it as it stands, with
+no network, no API key and nothing to rebuild.
 
-## Utiliser le dataset
+## Using the dataset
 
 ```python
 import pandas as pd
 px = pd.read_csv("data/gem_dataset.csv", index_col="Date", parse_dates=True)
 ```
 
-| Colonne | Contenu |
+| Column | Contents |
 |---|---|
-| `US` | Actions américaines |
-| `EXUS` | Actions hors États-Unis |
-| `BOND` | Obligations agrégées US |
-| `TBILL` | Bons du Trésor 1 mois |
+| `US` | US equity |
+| `EXUS` | Non-US equity |
+| `BOND` | US aggregate bonds |
+| `TBILL` | One-month Treasury bills |
 
-Ce sont des **niveaux d'indices**, pas des rendements : `px.pct_change()` donne
-les rendements mensuels. Les niveaux n'ont pas de sens en valeur absolue (chaque
-fournisseur a sa propre base), seuls leurs mouvements en ont.
+These are **index levels**, not returns: `px.pct_change()` gives the monthly
+returns. The levels are meaningless in absolute terms — each provider has its
+own base — only their movements carry information.
 
-## Les quatre fichiers
+## The four files
 
-| Fichier | Pour quoi faire |
+| File | What it is for |
 |---|---|
-| `gem_dataset.csv` | **Le dataset.** Format large, 4 colonnes. C'est ce que lit le backtest. |
-| `gem_dataset_components.csv` | Chaque série de fournisseur en regard de la colonne calculée, pour vérifier les raccords à l'œil. |
-| `gem_dataset_detailed.csv` | Format long : une ligne par (date, série), avec sa provenance. |
-| `gem_dataset.manifest.json` | Empreinte SHA-256, nombre de lignes, période, CAGR et volatilité par colonne. |
+| `gem_dataset.csv` | **The dataset.** Wide format, 4 columns. This is what the backtest reads. |
+| `gem_dataset_components.csv` | Each vendor series beside the computed column, so a splice can be checked by eye. |
+| `gem_dataset_detailed.csv` | Long format: one row per (date, series), with its provenance. |
+| `gem_dataset.manifest.json` | SHA-256 fingerprint, row count, period, CAGR and volatility per column. |
 
-Et trois documents : [`SEGMENTS.md`](SEGMENTS.md) (quel indice est mesuré à quelle
-période), [`SOURCES.md`](SOURCES.md) (provenance) et
-[`VALIDATION.md`](VALIDATION.md) (l'audit).
+Plus three documents: [`SEGMENTS.md`](SEGMENTS.md) (which index is measured over
+which period), [`SOURCES.md`](SOURCES.md) (provenance) and
+[`VALIDATION.md`](VALIDATION.md) (the audit).
 
-## Vérifier qu'il est intact
+## Checking that it is intact
 
 ```bash
-python src/build_dataset.py          # --verify est le mode par défaut
+python src/build_dataset.py          # --verify is the default mode
 ```
 
-Contrôle hors ligne du fichier contre son manifeste : hash, nombre de lignes, et
-CAGR de chaque colonne. N'écrit rien, n'appelle rien. C'est ce qui rend les
-chiffres du papier vérifiables par un tiers.
+An offline check of the file against its manifest: hash, row count, and the CAGR
+of each column. It writes nothing and calls nothing. This is what makes the
+figures in the paper checkable by a third party.
 
-## Le mettre à jour
+## Updating it
 
 ```bash
 python src/build_dataset.py --refresh
 ```
 
-**Ajoute uniquement les mois nouveaux.** Les mois déjà publiés sont recopiés
-verbatim depuis le fichier existant, jamais recalculés. Si une source venait à
-renvoyer des valeurs différentes pour un mois déjà publié, le script **refuse
-d'écrire** et affiche le détail des écarts.
+**Adds new months only.** Months already published are copied verbatim from the
+existing file, never recomputed. Should a source ever return different values
+for a month already published, the script **refuses to write** and prints the
+discrepancies.
 
-Tout reconstruire depuis zéro demande un geste explicite :
+Rebuilding everything from scratch takes an explicit gesture:
 
 ```bash
 python src/build_dataset.py --rebuild --force
 ```
 
-À n'utiliser que si un changement de l'historique est voulu et documenté — par
-exemple un fournisseur ayant révisé sa série.
+Use it only when a change to the history is intended and documented — a provider
+having revised its series, for instance.
 
-## Ce qu'il faut savoir avant de s'en servir
+## What to know before using it
 
-**Les séries changent d'indice au fil du temps.** `EXUS` mesure le MSCI World ex
-USA jusqu'en 1987 puis le MSCI ACWI ex USA à partir de 1988 : l'univers change,
-les émergents entrent. `BOND` est un mélange Ibbotson jusqu'en 1975 puis le
-Bloomberg Barclays US Aggregate, qui n'existe pas avant janvier 1976. Ces
-raccords ne sont pas des approximations de confort, ils reflètent ce qui existait
-réellement à chaque époque — mais ils doivent être signalés dans tout travail
-publié. Le détail est dans [`SEGMENTS.md`](SEGMENTS.md).
+**The series change index over time.** `EXUS` measures MSCI World ex USA until
+1987 and MSCI ACWI ex USA from 1988: the universe changes, emerging markets
+enter. `BOND` is an Ibbotson blend until 1975 and then the Bloomberg Barclays US
+Aggregate, which does not exist before January 1976. These splices are not
+conveniences — they reflect what actually existed at each date — but they must
+be disclosed in any published work. The detail is in
+[`SEGMENTS.md`](SEGMENTS.md).
 
-**Le socle historique est une redistribution, pas une source primaire.** Il vient
-du fichier `msci_all_gross.csv` du dépôt
-[alexjansenhome/GEM](https://github.com/alexjansenhome/GEM), qui reproduit la
-construction d'Antonacci. C'est pourquoi il est confronté à neuf références
-indépendantes dans [`VALIDATION.md`](VALIDATION.md) — un audit qui a d'ailleurs
-trouvé un vrai défaut, corrigé depuis.
+**The historical core is a redistribution, not a primary source.** It comes from
+the file `msci_all_gross.csv` in the
+[alexjansenhome/GEM](https://github.com/alexjansenhome/GEM) repository, which
+reproduces Antonacci's construction. That is why it is set against nine
+independent references in [`VALIDATION.md`](VALIDATION.md) — an audit which did
+in fact turn up a genuine defect, since repaired.
 
-**Aucune donnée payante.** Tout provient de Yahoo Finance, de l'API publique
-MSCI et de la Kenneth French Data Library.
+**No paid data.** Everything comes from Yahoo Finance, MSCI's public index
+endpoint and the Kenneth French Data Library.

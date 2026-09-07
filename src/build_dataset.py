@@ -70,7 +70,7 @@ MSCI_EXUS_CODE = "664211"
 # name the series that was really used rather than the one we asked for.
 EXUS_LIVE_USED = {"key": "msci_api_%s" % "664211",
                   "index": "MSCI ACWI ex USA IMI, gross total return, USD",
-                  "provider": "MSCI (API publique)",
+                  "provider": "MSCI (public API)",
                   "source": "index_code 664211"}
 
 # Live sources used to extend each series past SPLICE_DATE.
@@ -79,13 +79,13 @@ LIVE_SOURCES = {
     "US": ("Yahoo Finance, ^SP500TR (S&P 500 Total Return index)",
            "S&P 500 Total Return", "Yahoo Finance", "^SP500TR",
            lambda: fetch_yahoo("^SP500TR", "1987-01-01")),
-    "EXUS": ("MSCI public API, index %s (repli ETF ACWX)" % MSCI_EXUS_CODE,
+    "EXUS": ("MSCI public API, index %s (ACWX ETF fallback)" % MSCI_EXUS_CODE,
              "MSCI ACWI ex USA IMI, gross total return, USD",
-             "MSCI (API publique)", "index_code %s" % MSCI_EXUS_CODE,
+             "MSCI (public API)", "index_code %s" % MSCI_EXUS_CODE,
              lambda: _exus_live()),
     "BOND": ("Yahoo Finance, AGG (iShares Core US Aggregate Bond ETF)",
-             "Bloomberg US Aggregate Bond (via ETF, net de frais)",
-             "Yahoo Finance", "AGG, cours ajusté des dividendes",
+             "Bloomberg US Aggregate Bond (via ETF, net of fees)",
+             "Yahoo Finance", "AGG, dividend-adjusted price",
              lambda: fetch_yahoo("AGG", "2003-01-01")),
 }
 
@@ -125,9 +125,9 @@ def _exus_live():
               % str(exc)[:60])
     EXUS_LIVE_USED.update(
         key="acwx_etf",
-        index="MSCI ACWI ex USA via ETF ACWX (net de frais et de retenues)",
+        index="MSCI ACWI ex USA via the ACWX ETF (net of fees and withholding)",
         provider="Yahoo Finance",
-        source="ACWX, cours ajuste des dividendes")
+        source="ACWX, dividend-adjusted price")
     return fetch_yahoo("ACWX", "2008-01-01")
 
 
@@ -249,7 +249,7 @@ def write_outputs(df, core, repairs, notes, live_raw):
 
     comps = build_components(df, segments, live_raw)
     comps.to_csv(OUT_COMPONENTS, float_format=FLOAT_FMT)
-    print("   wrote %s (%d colonnes, composantes + colonne calculée)"
+    print("   wrote %s (%d columns, components + computed column)"
           % (OUT_COMPONENTS, comps.shape[1]))
 
     _write_sources(df, core, repairs, notes)
@@ -320,32 +320,32 @@ def verify():
     df = pd.read_csv(OUT_CSV, index_col="Date", parse_dates=True)
 
     print("Dataset : %s" % OUT_CSV)
-    print("  gelé le      %s" % m["generated"])
-    print("  période      %s -> %s (%d mois)" % (m["start"], m["end"], m["rows"]))
+    print("  frozen on    %s" % m["generated"])
+    print("  period       %s -> %s (%d months)" % (m["start"], m["end"], m["rows"]))
 
     problems = []
     actual = _sha256(OUT_CSV)
     if actual != m["sha256"]:
-        problems.append("sha256 %s attendu, %s trouvé" % (m["sha256"][:16], actual[:16]))
+        problems.append("sha256 %s expected, %s found" % (m["sha256"][:16], actual[:16]))
     if len(df) != m["rows"]:
-        problems.append("%d lignes attendues, %d trouvées" % (m["rows"], len(df)))
+        problems.append("%d rows expected, %d found" % (m["rows"], len(df)))
     for col, exp in m["fingerprint"].items():
         if col not in df.columns:
-            problems.append("colonne %s absente" % col)
+            problems.append("column %s missing" % col)
             continue
         r = df[col].pct_change().dropna()
         got = round(float((1 + r).prod() ** (12 / len(r)) - 1), 8)
         if abs(got - exp["cagr"]) > 1e-8:
-            problems.append("%s : CAGR %.6f attendu, %.6f trouvé"
+            problems.append("%s: CAGR %.6f expected, %.6f found"
                             % (col, exp["cagr"], got))
 
     if problems:
-        print("\n  ÉCHEC :")
+        print("\n  FAILED:")
         for p in problems:
             print("    - %s" % p)
         raise SystemExit(1)
     print("  sha256       %s" % m["sha256"])
-    print("\n  OK — le fichier est identique à sa version gelée.")
+    print("\n  OK — the file is identical to its frozen version.")
     for col, exp in m["fingerprint"].items():
         print("    %-6s CAGR %6.2f%%  vol %5.2f%%"
               % (col, exp["cagr"] * 100, exp["vol"] * 100))
@@ -377,11 +377,11 @@ def assert_history_unchanged(existing, candidate, rtol=1e-5):
     diff = drift > rtol
     if not diff.to_numpy().any():
         worst = float(drift.to_numpy().max()) if len(shared) else 0.0
-        print("   dérive maximale sur l'historique : %.1e (seuil %.0e)"
+        print("   largest drift over the history: %.1e (tolerance %.0e)"
               % (worst, rtol))
         return len(shared)
 
-    print("\nREFUS : le rafraîchissement modifierait des mois déjà publiés.")
+    print("\nREFUSED: the refresh would alter months already published.")
     rows = diff.any(axis=1)
     for date in existing.index[rows][:10]:
         for col in existing.columns:
@@ -390,11 +390,12 @@ def assert_history_unchanged(existing, candidate, rtol=1e-5):
                       % (date.date(), col, old.loc[date, col], new.loc[date, col]))
     total = int(rows.sum())
     if total > 10:
-        print("  ... et %d autre(s) mois" % (total - 10))
+        print("  ... and %d further month(s)" % (total - 10))
     raise SystemExit(
-        "\n%d mois seraient réécrits. L'historique est gelé : si ce changement "
-        "est voulu (fournisseur ayant révisé sa série, ou changement de source "
-        "assumé), relancer avec --rebuild --force et le documenter." % total)
+        "\n%d months would be rewritten. The history is frozen: if the change "
+        "is intended (a provider having revised its series, or a deliberate "
+        "change of source), rerun with --rebuild --force and document it."
+        % total)
 
 
 def build_components(df, segments, live_raw):
@@ -512,7 +513,7 @@ def build_segment_map(df):
                 "index_name": index_name,
                 "provider": provider,
                 "source_series": source,
-                "origin": "socle historique (CSV redistribué)",
+                "origin": "historical core (redistributed CSV)",
             })
         _label, index_name, provider, source, _loader = LIVE_SOURCES[key]
         if key == "EXUS":
@@ -527,7 +528,7 @@ def build_segment_map(df):
             "index_name": index_name,
             "provider": provider,
             "source_series": source,
-            "origin": "prolongement (source live)",
+            "origin": "extension (live source)",
         })
     rows.append({
         "series": "TBILL",
@@ -536,8 +537,8 @@ def build_segment_map(df):
         "end": end,
         "index_name": "US 1-month Treasury bill",
         "provider": "Kenneth French Data Library",
-        "source_series": "F-F_Research_Data_Factors, colonne RF",
-        "origin": "source unique continue (aucun raccord)",
+        "source_series": "F-F_Research_Data_Factors, RF column",
+        "origin": "single continuous source (no splice)",
     })
     seg = pd.DataFrame(rows).sort_values(["series", "start"]).reset_index(drop=True)
     # Clip to the sample actually produced.
@@ -576,26 +577,25 @@ def build_detailed(df, segments, repairs):
 def _write_segments(df, segments):
     """Human-readable provenance map -- the table to reproduce in the paper."""
     out = []
-    out.append("# Carte de provenance, segment par segment\n")
-    out.append("*Généré automatiquement par `src/build_dataset.py`.*\n")
-    out.append("Chaque série du jeu de données est un **enchaînement de séries "
-               "de fournisseurs différents**. Ce document dit, pour chaque mois, "
-               "quel indice réel est effectivement mesuré.\n")
-    out.append("Les bornes du socle historique ne sont pas reprises d'une "
-               "documentation : elles ont été **retrouvées dans le fichier "
-               "lui-même**, en cherchant la plage contiguë sur laquelle le "
-               "rapport série épissée / composante est constant, puis "
-               "confirmées par le mois où la composante entrante est rebasée "
-               "à 100.\n")
+    out.append("# Provenance map, segment by segment\n")
+    out.append("*Generated automatically by `src/build_dataset.py`.*\n")
+    out.append("Every series in the dataset is a **chain of series from "
+               "different providers**. This document states, for each month, "
+               "which real index is actually being measured.\n")
+    out.append("The boundaries of the historical core are not taken from any "
+               "documentation: they were **recovered from the file itself**, "
+               "by searching for the contiguous range over which the ratio of "
+               "spliced series to component is constant, then confirmed by the "
+               "month in which the incoming component is rebased to 100.\n")
 
-    labels = {"US": "Actions américaines", "EXUS": "Actions hors États-Unis",
-              "BOND": "Obligations agrégées US", "TBILL": "Monétaire (T-bills)"}
+    labels = {"US": "US equity", "EXUS": "Non-US equity",
+              "BOND": "US aggregate bonds", "TBILL": "Cash (T-bills)"}
     for series in ["US", "EXUS", "BOND", "TBILL"]:
         segs = segments[segments["series"] == series]
         if segs.empty:
             continue
         out.append("\n## `%s` — %s\n" % (series, labels.get(series, series)))
-        out.append("| Segment | Début | Fin | Mois | Indice réellement mesuré | Fournisseur | Série source |")
+        out.append("| Segment | Start | End | Months | Index actually measured | Provider | Source series |")
         out.append("|---|---|---|---:|---|---|---|")
         for _, r in segs.iterrows():
             months = (r["end"].to_period("M") - r["start"].to_period("M")).n + 1
@@ -604,53 +604,53 @@ def _write_segments(df, segments):
                           months, r["index_name"], r["provider"],
                           r["source_series"]))
 
-    out.append("\n## Ce que ces raccords impliquent\n")
-    out.append("- **`EXUS` change d'univers en 1988** : avant, MSCI World ex USA "
-               "ne couvre que les marchés développés ; après, MSCI ACWI ex USA "
-               "ajoute les marchés émergents (environ un quart de l'indice "
-               "aujourd'hui). La série n'est donc pas homogène : la volatilité "
-               "et la composition géographique changent à cette date. "
-               "C'est la construction retenue par Antonacci lui-même, et elle "
-               "reflète ce qu'un investisseur pouvait réellement acheter à "
-               "chaque époque, mais elle doit être signalée dans le paper.\n")
-    out.append("- **`BOND` change de nature en 1976** : avant, un mélange "
-               "40/60 Treasuries/corporates intermédiaires ; après, le "
-               "Bloomberg Barclays US Aggregate, qui inclut du titrisé et une "
-               "duration différente. L'indice Aggregate n'existe pas avant "
-               "janvier 1976 — c'est une limite du monde réel, pas un choix.\n")
-    out.append("- **`US` ne change pas d'indice en 2013**, seulement de "
-               "fournisseur : la série Ibbotson Large Cap et le S&P 500 Total "
-               "Return mesurent le même indice. Le raccord est sans effet "
-               "économique.\n")
-    out.append("- **`TBILL` ne comporte aucun raccord** : une seule source "
-               "continue de 1926 à aujourd'hui.\n")
+    out.append("\n## What these splices imply\n")
+    out.append("- **`EXUS` changes universe in 1988**: before, MSCI World ex "
+               "USA covers developed markets only; after, MSCI ACWI ex USA "
+               "adds emerging markets (roughly a quarter of the index today). "
+               "The series is therefore not homogeneous: volatility and "
+               "geographic composition change at that date. This is the "
+               "construction Antonacci himself uses, and it reflects what an "
+               "investor could actually buy at each date, but it must be "
+               "disclosed in the paper.\n")
+    out.append("- **`BOND` changes nature in 1976**: before, a 40/60 blend of "
+               "intermediate Treasuries and corporates; after, the Bloomberg "
+               "Barclays US Aggregate, which includes securitised debt and "
+               "carries a different duration. The Aggregate index does not "
+               "exist before January 1976 — a limit of the real world, not a "
+               "choice.\n")
+    out.append("- **`US` does not change index in 2013**, only provider: the "
+               "Ibbotson Large Cap series and the S&P 500 Total Return series "
+               "measure the same index. The handover has no economic "
+               "content.\n")
+    out.append("- **`TBILL` has no splice at all**: a single continuous source "
+               "from 1926 to today.\n")
 
-    out.append("\n## Vérifier les raccords soi-même\n")
-    out.append("`gem_dataset_components.csv` reprend le format du fichier "
-               "source : **une colonne par série de fournisseur, puis la "
-               "colonne calculée qui les enchaîne**, plus une colonne "
-               "`<série>_source` nommant le segment actif ce mois-là.\n")
-    out.append("Chaque composante est remise à l'échelle de la série calculée "
-               "(changement d'unité seulement, aucun rendement mensuel n'est "
-               "modifié), si bien qu'en lisant une ligne de gauche à droite la "
-               "colonne calculée est **exactement égale** à la composante "
-               "active. Exemple au raccord de 1988 :\n")
+    out.append("\n## Checking the splices yourself\n")
+    out.append("`gem_dataset_components.csv` follows the format of the source "
+               "file: **one column per vendor series, then the computed column "
+               "that chains them**, plus a `<series>_source` column naming the "
+               "segment active in that month.\n")
+    out.append("Each component is rescaled to the computed series (a change of "
+               "unit only, no monthly return is altered), so that reading a "
+               "row from left to right the computed column is **exactly "
+               "equal** to the active component. Example at the 1988 "
+               "splice:\n")
     out.append("```")
     out.append("Date        World ex USA   ACWI ex USA      EXUS   source")
     out.append("1987-12-31       100.000       100.000   100.000   EXUS-1")
-    out.append("1988-01-31       101.572       101.680   101.680   EXUS-2   <- bascule")
+    out.append("1988-01-31       101.572       101.680   101.680   EXUS-2   <- switch")
     out.append("```")
-    out.append("\nÉcarts résiduels entre colonne calculée et composante active : "
-               "nuls sur les segments repris tels quels, et de l'ordre de "
-               "1e-5 sur les segments antérieurs à 1988, où le fichier publié "
-               "n'a que trois décimales. Seule exception, `BOND-1` (3,7e-3) : "
-               "le mélange 40/60 y est **reconstruit** en composant des "
-               "rendements mensuels, et l'arrondi du fichier source se cumule "
-               "sur 73 mois.\n")
-    out.append("La colonne `TBILL_csv_published_not_used` est présente sans "
-               "être utilisée : elle rend visible la divergence de 2013-2016 "
-               "qui a motivé l'abandon de cette colonne au profit de Ken "
-               "French.\n")
+    out.append("\nResidual differences between the computed column and the "
+               "active component: nil on segments carried over as they stand, "
+               "and of the order of 1e-5 on segments before 1988, where the "
+               "published file carries only three decimals. The one exception "
+               "is `BOND-1` (3.7e-3): the 40/60 blend is **reconstructed** "
+               "there by compounding monthly returns, and the rounding of the "
+               "source file accumulates over 73 months.\n")
+    out.append("The column `TBILL_csv_published_not_used` is present but "
+               "unused: it makes visible the 2013-2016 divergence that led to "
+               "abandoning that column in favour of Kenneth French's.\n")
 
     with open(os.path.join(DATA_DIR, "SEGMENTS.md"), "w", encoding="utf-8") as fh:
         fh.write("\n".join(out) + "\n")
@@ -659,41 +659,41 @@ def _write_segments(df, segments):
 def _write_sources(df, core, repairs, notes):
     """Provenance sheet -- this is what gets cited in the paper."""
     out = []
-    out.append("# Provenance des données\n")
-    out.append("*Généré automatiquement par `src/build_dataset.py`.*\n")
-    out.append("Jeu de données : `data/gem_dataset.csv` — "
-               "**%s → %s**, %d observations mensuelles, "
-               "niveaux d'indices en rendement total, USD.\n"
+    out.append("# Data provenance\n")
+    out.append("*Generated automatically by `src/build_dataset.py`.*\n")
+    out.append("Dataset: `data/gem_dataset.csv` — "
+               "**%s → %s**, %d monthly observations, "
+               "total-return index levels, USD.\n"
                % (df.index[0].date(), df.index[-1].date(), len(df)))
 
-    out.append("\n## Socle historique (%s → %s)\n"
+    out.append("\n## Historical core (%s → %s)\n"
                % (core.index[0].date(), SPLICE_DATE.date()))
-    out.append("Fichier `msci_all_gross.csv` du dépôt "
-               "[alexjansenhome/GEM](https://github.com/alexjansenhome/GEM), "
-               "qui reproduit la construction d'Antonacci.\n")
-    out.append("URL exacte : `%s`\n" % GEM_CSV_URL)
-    out.append("| Clé | Colonne d'origine | Contenu |")
+    out.append("The file `msci_all_gross.csv` from the "
+               "[alexjansenhome/GEM](https://github.com/alexjansenhome/GEM) "
+               "repository, which reproduces Antonacci's construction.\n")
+    out.append("Exact URL: `%s`\n" % GEM_CSV_URL)
+    out.append("| Key | Original column | Contents |")
     out.append("|---|---|---|")
     for key, (col, desc) in GEM_COLUMNS.items():
         out.append("| `%s` | `%s` | %s |" % (key, col, desc))
-    out.append("\nCe fichier est une **redistribution**, pas une source "
-               "primaire. Il est audité contre neuf références indépendantes "
-               "dans [`VALIDATION.md`](VALIDATION.md).\n")
+    out.append("\nThis file is a **redistribution**, not a primary source. It "
+               "is audited against nine independent references in "
+               "[`VALIDATION.md`](VALIDATION.md).\n")
 
     if repairs:
-        out.append("\n### Correction appliquée\n")
-        out.append("%d observation(s) de la jambe monétaire avaient perdu leur "
-                   "chiffre de tête dans le fichier publié. Corrigées par "
-                   "moyenne géométrique des mois voisins :\n" % len(repairs))
-        out.append("| Mois | Publié | Retenu |")
+        out.append("\n### Repair applied\n")
+        out.append("%d observation(s) of the cash leg had lost their leading "
+                   "digit in the published file. Repaired by taking the "
+                   "geometric mean of the neighbouring months:\n" % len(repairs))
+        out.append("| Month | Published | Used |")
         out.append("|---|---:|---:|")
         for r in repairs:
             out.append("| %s | %.3f | %.3f |"
                        % (r["date"].date(), r["observed"], r["repaired"]))
 
-    out.append("\n## Prolongement (%s → %s)\n"
+    out.append("\n## Extension (%s → %s)\n"
                % (SPLICE_DATE.date(), df.index[-1].date()))
-    out.append("| Clé | Source | Raccord | Facteur d'échelle | Mois ajoutés |")
+    out.append("| Key | Source | Junction | Scale factor | Months added |")
     out.append("|---|---|---|---:|---:|")
     for key, (label, _idx, _prov, _src, _loader) in LIVE_SOURCES.items():
         info = notes.get(key)
@@ -703,16 +703,17 @@ def _write_sources(df, core, repairs, notes):
             cut, scale, n = info
             out.append("| `%s` | %s | %s | %.6f | %d |"
                        % (key, label, cut.date(), scale, n))
-    out.append("\nLe raccord est un **changement de base uniquement** : la "
-               "série live est multipliée par une constante pour coïncider avec "
-               "le socle au mois de jonction. Aucun rendement mensuel n'est "
-               "modifié, ni avant ni après le raccord.\n")
+    out.append("\nThe splice is a **change of base only**: the live series is "
+               "multiplied by a constant so that it coincides with the core in "
+               "the junction month. No monthly return is altered, either "
+               "before or after the junction.\n")
 
-    out.append("\n## Reproduire\n")
+    out.append("\n## Reproducing\n")
     out.append("```bash\npython src/build_dataset.py     "
-               "# reconstruit data/gem_dataset.csv\n"
+               "# rebuilds data/gem_dataset.csv\n"
                "python src/validate_dataset.py  "
-               "# régénère data/VALIDATION.md\n```\n")
+               "# regenerates data/VALIDATION.md\n```\n")
+
 
     with open(os.path.join(DATA_DIR, "SOURCES.md"), "w", encoding="utf-8") as fh:
         fh.write("\n".join(out) + "\n")
@@ -721,15 +722,15 @@ def _write_sources(df, core, repairs, notes):
 USAGE = """\
 Usage: python src/build_dataset.py [--verify | --refresh | --rebuild [--force]]
 
-  --verify   (défaut) contrôle hors ligne le dataset gelé contre son manifeste.
-             N'écrit rien, n'appelle rien.
-  --refresh  n'AJOUTE que les mois nouveaux. Refuse d'écrire si un mois déjà
-             publié change de valeur.
-  --rebuild  reconstruit tout depuis les sources. Refuse d'écraser un dataset
-             existant sans --force.
+  --verify   (default) checks the frozen dataset offline against its manifest.
+             Writes nothing, calls nothing.
+  --refresh  ADDS new months only. Refuses to write if a month already
+             published changes value.
+  --rebuild  rebuilds everything from the sources. Refuses to overwrite an
+             existing dataset without --force.
 
-Le dataset est un artefact versionné, pas une sortie de build : `gem_backtest.py`
-lit le CSV et n'accède jamais au réseau.
+The dataset is a versioned artefact, not a build output: `gem_backtest.py`
+reads the CSV and never touches the network.
 """
 
 
@@ -739,7 +740,7 @@ def main():
                ("--verify", "--refresh", "--rebuild", "--force", "-h", "--help")]
     if unknown or "-h" in args or "--help" in args:
         if unknown:
-            print("argument inconnu : %s\n" % " ".join(unknown))
+            print("unknown argument: %s\n" % " ".join(unknown))
         raise SystemExit(USAGE)
 
     os.makedirs(DATA_DIR, exist_ok=True)
@@ -748,30 +749,30 @@ def main():
     if "--rebuild" in args:
         if os.path.exists(OUT_CSV) and not force:
             raise SystemExit(
-                "%s existe déjà.\nLe dataset est gelé : utiliser --refresh pour "
-                "ajouter les mois nouveaux, ou --rebuild --force pour tout "
-                "réécrire délibérément." % OUT_CSV)
-        print("MODE rebuild — reconstruction complète depuis les sources\n")
+                "%s already exists.\nThe dataset is frozen: use --refresh to "
+                "add new months, or --rebuild --force to rewrite everything "
+                "deliberately." % OUT_CSV)
+        print("MODE rebuild — full reconstruction from the sources\n")
         df, core, repairs, notes, live_raw = build_panel()
-        print("\n5. Écriture")
+        print("\n5. Writing")
         write_outputs(df, core, repairs, notes, live_raw)
         return
 
     if "--refresh" in args:
-        print("MODE refresh — ajout des mois nouveaux uniquement\n")
+        print("MODE refresh — new months only\n")
         if not os.path.exists(OUT_CSV):
-            raise SystemExit("%s absent : utiliser --rebuild" % OUT_CSV)
+            raise SystemExit("%s missing: use --rebuild" % OUT_CSV)
         existing = pd.read_csv(OUT_CSV, index_col="Date", parse_dates=True)
         df, core, repairs, notes, live_raw = build_panel()
 
-        print("\n5. Contrôle d'immuabilité")
+        print("\n5. Immutability check")
         shared = assert_history_unchanged(existing, df)
         added = df.index.difference(existing.index)
-        print("   %d mois déjà publiés, inchangés" % shared)
+        print("   %d months already published, unchanged" % shared)
         if not len(added):
-            print("   aucun mois nouveau — rien à écrire")
+            print("   no new month — nothing to write")
             return
-        print("   %d mois ajoutés : %s -> %s"
+        print("   %d months added: %s -> %s"
               % (len(added), added[0].date(), added[-1].date()))
 
         # Append-only in the literal sense: published rows are carried over
@@ -780,7 +781,8 @@ def main():
         df = pd.concat([existing, df.loc[added]]).sort_index()
         df.index.name = "Date"
 
-        print("\n6. Écriture")
+        print("\n6. Writing")
+
         write_outputs(df, core, repairs, notes, live_raw)
         return
 

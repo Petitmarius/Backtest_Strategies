@@ -238,26 +238,26 @@ def main():
 
     # ---------------- markdown report ----------------
     out = []
-    out.append("# Audit de fiabilité du jeu de données historique\n")
-    out.append("*Généré automatiquement par `src/validate_dataset.py` — "
-               "ne pas éditer à la main.*\n")
-    out.append("Source auditée : `msci_all_gross.csv` "
+    out.append("# Reliability audit of the historical dataset\n")
+    out.append("*Generated automatically by `src/validate_dataset.py` — "
+               "do not edit by hand.*\n")
+    out.append("Source audited: `msci_all_gross.csv` "
                "([alexjansenhome/GEM](https://github.com/alexjansenhome/GEM)), "
-               "**%s → %s** (%d mois).\n"
+               "**%s → %s** (%d months).\n"
                % (core.index[0].date(), core.index[-1].date(), len(core)))
 
-    out.append("\n## 1. Colonnes retenues\n")
-    out.append("| Clé | Colonne du CSV | Contenu |")
+    out.append("\n## 1. Columns used\n")
+    out.append("| Key | CSV column | Contents |")
     out.append("|---|---|---|")
     for key, (col, desc) in GEM_COLUMNS.items():
         out.append("| `%s` | `%s` | %s |" % (key, col, desc))
 
-    out.append("\n## 2. Confrontation à des sources indépendantes\n")
-    out.append("Comparaison en **rendements mensuels** (les niveaux d'indice ne "
-               "sont pas comparables entre fournisseurs : bases et dates de "
-               "référence différentes). `TE` = tracking error annualisée de "
-               "l'écart de rendement.\n")
-    out.append("| Série | Référence indépendante | Période | Mois | Corr. | TE ann. | CAGR audité | CAGR réf. | Écart |")
+    out.append("\n## 2. Comparison against independent sources\n")
+    out.append("Compared in **monthly returns** (index levels are not "
+               "comparable across providers: different bases and reference "
+               "dates). `TE` = annualised tracking error of the return "
+               "difference.\n")
+    out.append("| Series | Independent reference | Period | Months | Corr. | Ann. TE | Audited CAGR | Reference CAGR | Gap |")
     out.append("|---|---|---|---:|---:|---:|---:|---:|---:|")
     for r in sorted(results, key=lambda x: x["column"]):
         out.append("| `%s` | %s | %s → %s | %d | %.4f | %.2f%% | %.2f%% | %.2f%% | %+.2f pt |"
@@ -266,15 +266,15 @@ def main():
                       r["cagr_audited"] * 100, r["cagr_reference"] * 100,
                       r["cagr_gap"] * 100))
 
-    out.append("\n### Notes d'indépendance\n")
+    out.append("\n### Notes on independence\n")
     for r in sorted(results, key=lambda x: x["column"]):
         out.append("- `%s` vs %s — %s" % (r["column"], r["label"], r["note"]))
 
-    out.append("\n## 3. Test de décalage temporel\n")
-    out.append("Un fichier redistribué décalé d'un mois passerait inaperçu sur "
-               "un graphique mais fausserait tout backtest de momentum. "
-               "**La corrélation doit être maximale au lag 0.**\n")
-    out.append("| Série | Référence | lag -2 | lag -1 | lag 0 | lag +1 | lag +2 | Max | Attendu |")
+    out.append("\n## 3. Timing-shift test\n")
+    out.append("A redistributed file shifted by one month would pass unnoticed "
+               "on a chart but would corrupt any momentum backtest. "
+               "**Correlation must peak at lag 0.**\n")
+    out.append("| Series | Reference | lag -2 | lag -1 | lag 0 | lag +1 | lag +2 | Max | Expected |")
     out.append("|---|---|---:|---:|---:|---:|---:|:--:|:--:|")
     for r in sorted(results, key=lambda x: x["column"]):
         lags = r["lags"]
@@ -283,63 +283,63 @@ def main():
         out.append("| `%s` | %s | %.3f | %.3f | %.3f | %.3f | %.3f | %+d | %s |"
                    % (r["column"], r["label"][:40], lags[-2], lags[-1],
                       lags[0], lags[1], lags[2], best,
-                      "OK" if best == exp else "**ANOMALIE**"))
-    out.append("\nToutes les références sont alignées au lag 0, à une exception "
-               "documentée : `TB3MS` est la **moyenne mensuelle d'un taux**, "
-               "et le taux coté en mois *t* est encaissé sur le mois *t+1* ; "
-               "son maximum au lag +1 est donc la relation économique correcte. "
-               "La référence strictement comparable pour la jambe monétaire est "
-               "le T-bill 1 mois de Ken French, aligné au lag 0.\n")
+                      "OK" if best == exp else "**ANOMALY**"))
+    out.append("\nEvery reference is aligned at lag 0, with one documented "
+               "exception: `TB3MS` is the **monthly average of a yield**, and "
+               "the yield quoted in month *t* is earned over month *t+1*, so "
+               "its peak at lag +1 is the correct economic relationship. The "
+               "strictly comparable reference for the cash leg is Kenneth "
+               "French's one-month bill, aligned at lag 0.\n")
 
-    out.append("\n## 4. Défaut détecté dans le fichier publié, et sa correction\n")
+    out.append("\n## 4. Defect found in the published file, and its repair\n")
     if repairs:
-        out.append("L'audit structurel du fichier **tel que publié** relève "
-                   "%d anomalie(s). Un indice de rendement total monétaire "
-                   "capitalise un taux positif chaque mois : il ne peut "
-                   "mécaniquement jamais baisser. Toute baisse est donc une "
-                   "erreur de données, pas un mouvement de marché.\n"
+        out.append("The structural audit of the file **as published** reports "
+                   "%d anomaly(ies). A cash total-return index accrues a "
+                   "positive yield every month: it can never mechanically "
+                   "fall. Any fall is therefore a data error, not a market "
+                   "movement.\n"
                    % len(raw_issues))
-        out.append("Trois observations de novembre ont **perdu leur chiffre de "
-                   "tête**. La valeur correcte est reconstruite par moyenne "
-                   "géométrique des deux mois voisins, ce qui restitue le "
-                   "chiffre manquant à quatre chiffres significatifs sans "
-                   "constante arbitraire.\n")
-        out.append("| Série | Mois | Valeur publiée | Valeur retenue | Voisins | Baisse | Nature |")
+        out.append("Three November observations have **lost their leading "
+                   "digit**. The correct value is reconstructed as the "
+                   "geometric mean of the two neighbouring months, which "
+                   "recovers the missing digit to four significant figures "
+                   "with no arbitrary constant.\n")
+        out.append("| Series | Month | Published value | Value used | Neighbours | Fall | Kind |")
         out.append("|---|---|---:|---:|---|---:|:--:|")
         for r in repairs:
             out.append("| `%s` | %s | %.3f | **%.3f** | %.4f / %.4f | %.3f%% | %s |"
                        % (r["series"], r["date"].date(), r["observed"],
                           r["repaired"], r["neighbours"][0], r["neighbours"][1],
                           r["drop"] * 100, r["kind"]))
-        out.append("\nLes lignes `rounding` sont de simples arrondis à trois "
-                   "décimales dans le fichier publié (baisse < 0,1 %) et sont "
-                   "sans effet ; seules les lignes `material` corrigent le "
-                   "chiffre de tête manquant.\n")
-        out.append("\nImpact : non corrigé, ce défaut injecte un rendement "
-                   "mensuel de −96 % suivi de +2 749 % dans la jambe monétaire, "
-                   "ce qui fausse le signal de momentum absolu sur les 12 mois "
-                   "qui suivent chaque occurrence (soit 1990-1993). "
-                   "La correction est appliquée en amont, dans "
+        out.append("\nThe `rounding` rows are plain three-decimal roundings in "
+                   "the published file (fall < 0.1 %) and have no effect; only "
+                   "the `material` rows repair the missing leading digit.\n")
+        out.append("\nImpact: left uncorrected, this defect injects a monthly "
+                   "return of −96 % followed by +2,749 % into the cash leg, "
+                   "which corrupts the absolute momentum signal for the twelve "
+                   "months following each occurrence (that is, 1990-1993). The "
+                   "repair is applied upstream, in "
                    "`repair_monotone_index()`.\n")
     else:
-        out.append("Aucune correction nécessaire.\n")
+        out.append("No repair needed.\n")
 
-    out.append("\n### Contrôles structurels après correction\n")
+    out.append("\n### Structural checks after repair\n")
     if issues:
-        out.append("| Anomalie résiduelle |")
+        out.append("| Residual anomaly |")
         out.append("|---|")
         for i in issues:
             out.append("| %s |" % i)
     else:
-        out.append("Aucune anomalie résiduelle : index mensuel continu, trié, "
-                   "sans doublon, niveaux strictement positifs, aucun rendement "
-                   "mensuel supérieur à 40 % en valeur absolue.\n")
+        out.append("No residual anomaly: continuous monthly index, sorted, no "
+                   "duplicates, strictly positive levels, no monthly return "
+                   "beyond 40 % in absolute value.\n")
 
-    out.append("\n## 5. Contrôle des points de raccord (splices)\n")
-    out.append("Un raccord mal fait produit typiquement un mois aberrant à la "
-               "jointure. Score z du mois de raccord dans la distribution de sa "
-               "propre série ; |z| < 3 attendu.\n")
-    out.append("| Série | Mois | Raccord | z | Verdict |")
+    out.append("\n## 5. Splice-joint check\n")
+    out.append("A badly made splice typically shows up as one freak month at "
+               "the junction. z-score of the junction month within the "
+               "distribution of its own series; |z| < 3 expected.\n")
+    out.append("| Series | Month | Splice | z | Verdict |")
+
     out.append("|---|---|---|---:|:--:|")
     for col, date, what, z, verdict in seams:
         out.append("| `%s` | %s | %s | %s | %s |"

@@ -1,66 +1,66 @@
-# Carte de provenance, segment par segment
+# Provenance map, segment by segment
 
-*Généré automatiquement par `src/build_dataset.py`.*
+*Generated automatically by `src/build_dataset.py`.*
 
-Chaque série du jeu de données est un **enchaînement de séries de fournisseurs différents**. Ce document dit, pour chaque mois, quel indice réel est effectivement mesuré.
+Every series in the dataset is a **chain of series from different providers**. This document states, for each month, which real index is actually being measured.
 
-Les bornes du socle historique ne sont pas reprises d'une documentation : elles ont été **retrouvées dans le fichier lui-même**, en cherchant la plage contiguë sur laquelle le rapport série épissée / composante est constant, puis confirmées par le mois où la composante entrante est rebasée à 100.
+The boundaries of the historical core are not taken from any documentation: they were **recovered from the file itself**, by searching for the contiguous range over which the ratio of spliced series to component is constant, then confirmed by the month in which the incoming component is rebased to 100.
 
 
-## `US` — Actions américaines
+## `US` — US equity
 
-| Segment | Début | Fin | Mois | Indice réellement mesuré | Fournisseur | Série source |
+| Segment | Start | End | Months | Index actually measured | Provider | Source series |
 |---|---|---|---:|---|---|---|
 | `US-1` | 1969-12-31 | 2012-12-31 | 517 | Ibbotson US Large Cap total return | Morningstar / Ibbotson SBBI | Large Caps (col. H) |
 | `US-2` | 2013-01-31 | 2016-12-31 | 48 | S&P 500 Total Return | Yahoo Finance | SP500TR (col. G) |
 | `US-3` | 2017-01-31 | 2026-07-31 | 115 | S&P 500 Total Return | Yahoo Finance | ^SP500TR |
 
-## `EXUS` — Actions hors États-Unis
+## `EXUS` — Non-US equity
 
-| Segment | Début | Fin | Mois | Indice réellement mesuré | Fournisseur | Série source |
+| Segment | Start | End | Months | Index actually measured | Provider | Source series |
 |---|---|---|---:|---|---|---|
 | `EXUS-1` | 1969-12-31 | 1987-12-31 | 217 | MSCI World ex USA, gross total return, USD | MSCI | WORLD ex USA (col. C) |
 | `EXUS-2` | 1988-01-31 | 2016-12-31 | 348 | MSCI ACWI ex USA, gross total return, USD | MSCI | ACWI ex USA (col. D) |
-| `EXUS-3` | 2017-01-31 | 2026-07-31 | 115 | MSCI ACWI ex USA IMI, gross total return, USD | MSCI (API publique) | index_code 664211 |
+| `EXUS-3` | 2017-01-31 | 2026-07-31 | 115 | MSCI ACWI ex USA IMI, gross total return, USD | MSCI (public API) | index_code 664211 |
 
-## `BOND` — Obligations agrégées US
+## `BOND` — US aggregate bonds
 
-| Segment | Début | Fin | Mois | Indice réellement mesuré | Fournisseur | Série source |
+| Segment | Start | End | Months | Index actually measured | Provider | Source series |
 |---|---|---|---:|---|---|---|
 | `BOND-1` | 1969-12-31 | 1975-12-31 | 73 | 40% Ibbotson Intermediate Treasuries + 60% Ibbotson Intermediate Corporates, rebalanced monthly | Morningstar / Ibbotson SBBI | Mid-Treasuries + Mid-Corporate (col. J, K) |
 | `BOND-2` | 1976-01-31 | 2016-12-31 | 492 | Bloomberg Barclays US Aggregate Bond, total return | Morningstar | AGG (col. F) |
-| `BOND-3` | 2017-01-31 | 2026-07-31 | 115 | Bloomberg US Aggregate Bond (via ETF, net de frais) | Yahoo Finance | AGG, cours ajusté des dividendes |
+| `BOND-3` | 2017-01-31 | 2026-07-31 | 115 | Bloomberg US Aggregate Bond (via ETF, net of fees) | Yahoo Finance | AGG, dividend-adjusted price |
 
-## `TBILL` — Monétaire (T-bills)
+## `TBILL` — Cash (T-bills)
 
-| Segment | Début | Fin | Mois | Indice réellement mesuré | Fournisseur | Série source |
+| Segment | Start | End | Months | Index actually measured | Provider | Source series |
 |---|---|---|---:|---|---|---|
-| `TBILL-1` | 1969-12-31 | 2026-07-31 | 680 | US 1-month Treasury bill | Kenneth French Data Library | F-F_Research_Data_Factors, colonne RF |
+| `TBILL-1` | 1969-12-31 | 2026-07-31 | 680 | US 1-month Treasury bill | Kenneth French Data Library | F-F_Research_Data_Factors, RF column |
 
-## Ce que ces raccords impliquent
+## What these splices imply
 
-- **`EXUS` change d'univers en 1988** : avant, MSCI World ex USA ne couvre que les marchés développés ; après, MSCI ACWI ex USA ajoute les marchés émergents (environ un quart de l'indice aujourd'hui). La série n'est donc pas homogène : la volatilité et la composition géographique changent à cette date. C'est la construction retenue par Antonacci lui-même, et elle reflète ce qu'un investisseur pouvait réellement acheter à chaque époque, mais elle doit être signalée dans le paper.
+- **`EXUS` changes universe in 1988**: before, MSCI World ex USA covers developed markets only; after, MSCI ACWI ex USA adds emerging markets (roughly a quarter of the index today). The series is therefore not homogeneous: volatility and geographic composition change at that date. This is the construction Antonacci himself uses, and it reflects what an investor could actually buy at each date, but it must be disclosed in the paper.
 
-- **`BOND` change de nature en 1976** : avant, un mélange 40/60 Treasuries/corporates intermédiaires ; après, le Bloomberg Barclays US Aggregate, qui inclut du titrisé et une duration différente. L'indice Aggregate n'existe pas avant janvier 1976 — c'est une limite du monde réel, pas un choix.
+- **`BOND` changes nature in 1976**: before, a 40/60 blend of intermediate Treasuries and corporates; after, the Bloomberg Barclays US Aggregate, which includes securitised debt and carries a different duration. The Aggregate index does not exist before January 1976 — a limit of the real world, not a choice.
 
-- **`US` ne change pas d'indice en 2013**, seulement de fournisseur : la série Ibbotson Large Cap et le S&P 500 Total Return mesurent le même indice. Le raccord est sans effet économique.
+- **`US` does not change index in 2013**, only provider: the Ibbotson Large Cap series and the S&P 500 Total Return series measure the same index. The handover has no economic content.
 
-- **`TBILL` ne comporte aucun raccord** : une seule source continue de 1926 à aujourd'hui.
+- **`TBILL` has no splice at all**: a single continuous source from 1926 to today.
 
 
-## Vérifier les raccords soi-même
+## Checking the splices yourself
 
-`gem_dataset_components.csv` reprend le format du fichier source : **une colonne par série de fournisseur, puis la colonne calculée qui les enchaîne**, plus une colonne `<série>_source` nommant le segment actif ce mois-là.
+`gem_dataset_components.csv` follows the format of the source file: **one column per vendor series, then the computed column that chains them**, plus a `<series>_source` column naming the segment active in that month.
 
-Chaque composante est remise à l'échelle de la série calculée (changement d'unité seulement, aucun rendement mensuel n'est modifié), si bien qu'en lisant une ligne de gauche à droite la colonne calculée est **exactement égale** à la composante active. Exemple au raccord de 1988 :
+Each component is rescaled to the computed series (a change of unit only, no monthly return is altered), so that reading a row from left to right the computed column is **exactly equal** to the active component. Example at the 1988 splice:
 
 ```
 Date        World ex USA   ACWI ex USA      EXUS   source
 1987-12-31       100.000       100.000   100.000   EXUS-1
-1988-01-31       101.572       101.680   101.680   EXUS-2   <- bascule
+1988-01-31       101.572       101.680   101.680   EXUS-2   <- switch
 ```
 
-Écarts résiduels entre colonne calculée et composante active : nuls sur les segments repris tels quels, et de l'ordre de 1e-5 sur les segments antérieurs à 1988, où le fichier publié n'a que trois décimales. Seule exception, `BOND-1` (3,7e-3) : le mélange 40/60 y est **reconstruit** en composant des rendements mensuels, et l'arrondi du fichier source se cumule sur 73 mois.
+Residual differences between the computed column and the active component: nil on segments carried over as they stand, and of the order of 1e-5 on segments before 1988, where the published file carries only three decimals. The one exception is `BOND-1` (3.7e-3): the 40/60 blend is **reconstructed** there by compounding monthly returns, and the rounding of the source file accumulates over 73 months.
 
-La colonne `TBILL_csv_published_not_used` est présente sans être utilisée : elle rend visible la divergence de 2013-2016 qui a motivé l'abandon de cette colonne au profit de Ken French.
+The column `TBILL_csv_published_not_used` is present but unused: it makes visible the 2013-2016 divergence that led to abandoning that column in favour of Kenneth French's.
 

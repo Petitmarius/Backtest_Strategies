@@ -430,11 +430,11 @@ def main():
     decomp.to_csv(os.path.join(TAB_DIR, "02_decomposition.csv"))
 
     print("\n" + "=" * 88)
-    print("TABLE 2 — Décomposition d'Antonacci : d'où vient la surperformance ?")
+    print("TABLE 2 — Antonacci's decomposition: where does the edge come from?")
     print("=" * 88)
     print(_fmt(decomp).to_string())
-    print("\nLes deux briques prises isolément n'expliquent pas le total : "
-          "%.0f + %.0f = %.0f bps contre %.0f bps combinés."
+    print("\nThe two filters taken separately do not explain the total: "
+          "%.0f + %.0f = %.0f bps against %.0f bps combined."
           % (spread["Absolute momentum only"], spread["Relative momentum only"],
              spread["Absolute momentum only"] + spread["Relative momentum only"],
              spread["GEM (combined)"]))
@@ -458,34 +458,35 @@ def main():
     timing.to_csv(os.path.join(TAB_DIR, "07_allocation_vs_timing.csv"))
 
     print("\n" + "=" * 88)
-    print("TABLE 2b — Effet allocation contre effet timing")
+    print("TABLE 2b — Allocation effect against timing effect")
     print("=" * 88)
     show = timing.copy()
     for c in ["CAGR", "Volatility", "Max drawdown"]:
         show[c] = (show[c] * 100).round(2)
     print(show.round(2).to_string())
-    print("\n  Le mix statique détient la MÊME allocation moyenne que GEM "
-          "(%.0f%% US / %.0f%% hors US / %.0f%% obligations), figée, rebalancée "
-          "chaque mois." % tuple(weights[a] * 100 for a in ("US", "EXUS", "BOND")))
+    print("\n  The static mix holds the SAME average allocation as GEM "
+          "(%.0f%% US / %.0f%% non-US / %.0f%% bonds), fixed, rebalanced "
+          "monthly." % tuple(weights[a] * 100 for a in ("US", "EXUS", "BOND")))
     alloc_effect = (c_mix - c_bench) * 10000
     timing_effect = (c_gem - c_mix) * 10000
-    print("  Effet allocation (détenir ce panier, sans timing) : %+.0f bps/an"
+    print("  Allocation effect (holding the basket, no timing) : %+.0f bps/yr"
           % alloc_effect)
-    print("  Effet timing (ce qu'ajoute la commutation)        : %+.0f bps/an"
+    print("  Timing effect (what the switching adds)           : %+.0f bps/yr"
           % timing_effect)
     if alloc_effect < 0:
-        print("  -> Le panier d'actifs a COÛTÉ %.0f bps/an sur la période : hors US "
-              "et obligations ont sous-performé les actions US." % -alloc_effect)
-        print("     La totalité de la surperformance de GEM vient donc du timing, "
-              "qui doit d'abord effacer ce handicap.")
+        print("  -> The asset basket COST %.0f bps/yr over the sample: non-US "
+              "equity and bonds underperformed US equity." % -alloc_effect)
+        print("     All of GEM's excess return therefore comes from the timing, "
+              "which must first erase that handicap.")
     else:
-        print("  -> %.0f%% de la surperformance vient du timing, %.0f%% du panier."
+        print("  -> %.0f%% of the excess return comes from timing, %.0f%% from "
+              "the basket."
               % (timing_effect / (timing_effect + alloc_effect) * 100,
                  alloc_effect / (timing_effect + alloc_effect) * 100))
     dd_b, dd_m, dd_g = (drawdown_series(x).min()
                         for x in (bench, matched, gem))
-    print("  Drawdown : %.1f pt de moins grâce à l'allocation, "
-          "%.1f pt de plus grâce au timing (%.1f%% -> %.1f%% -> %.1f%%)."
+    print("  Drawdown: %.1f pt less from the allocation, "
+          "%.1f pt more from the timing (%.1f%% -> %.1f%% -> %.1f%%)."
           % ((dd_m - dd_b) * 100, (dd_g - dd_m) * 100,
              dd_b * 100, dd_m * 100, dd_g * 100))
 
@@ -502,7 +503,7 @@ def main():
     reg_tbl.to_frame().to_csv(os.path.join(TAB_DIR, "03_regression.csv"))
 
     print("\n" + "=" * 88)
-    print("TABLE 3 — Régression des excès de rendement GEM sur ceux du S&P 500")
+    print("TABLE 3 — Regression of GEM excess returns on S&P 500 excess returns")
     print("=" * 88)
     for k, v in reg_tbl.items():
         print("  %-32s %s" % (k, ("%.4f" % v) if abs(v) < 1000 else "%.0f" % v))
@@ -526,7 +527,7 @@ def main():
     dec.to_csv(os.path.join(TAB_DIR, "04_decades.csv"))
 
     print("\n" + "=" * 88)
-    print("TABLE 4 — Par décennie")
+    print("TABLE 4 — By decade")
     print("=" * 88)
     print((dec * 100).round(2).to_string())
 
@@ -542,15 +543,15 @@ def main():
     look.to_csv(os.path.join(TAB_DIR, "05_lookback_sensitivity.csv"))
 
     print("\n" + "=" * 88)
-    print("TABLE 5 — Sensibilité à la fenêtre de momentum")
+    print("TABLE 5 — Sensitivity to the momentum lookback window")
     print("=" * 88)
     show = look[["CAGR", "Volatility", "Sharpe", "Max drawdown", "Trades/year"]].copy()
     for c in ["CAGR", "Volatility", "Max drawdown"]:
         show[c] = (show[c] * 100).round(2)
     print(show.round(2).to_string())
-    print("\n  CAGR de %.2f%% à %.2f%% selon la fenêtre — "
-          "amplitude %.2f pt. La fenêtre de 12 mois retenue par Antonacci "
-          "donne %.2f%%."
+    print("\n  CAGR from %.2f%% to %.2f%% across the grid — "
+          "a range of %.2f pt. The twelve-month window chosen by Antonacci "
+          "gives %.2f%%."
           % (look["CAGR"].min() * 100, look["CAGR"].max() * 100,
              (look["CAGR"].max() - look["CAGR"].min()) * 100,
              look.loc[LOOKBACK, "CAGR"] * 100))
@@ -566,7 +567,7 @@ def main():
 
     turnover = (held != held.shift()).sum() / (len(held) / MONTHS)
     print("\n" + "=" * 88)
-    print("TABLE 6 — Sensibilité aux coûts de transaction (%.2f changements/an)"
+    print("TABLE 6 — Sensitivity to transaction costs (%.2f changes/yr)"
           % turnover)
     print("=" * 88)
     print((costs[["CAGR", "Sharpe", "Max drawdown"]]
@@ -577,9 +578,9 @@ def main():
     # ---- allocation summary --------------------------------------------
     alloc = (held.value_counts(normalize=True) * 100).round(1)
     print("\n" + "=" * 88)
-    print("Allocation dans le temps : %s"
+    print("Allocation through time: %s"
           % ", ".join("%s %.1f%%" % (k, v) for k, v in alloc.items()))
-    print("Position actuelle : %s (signal du %s)"
+    print("Current position: %s (signal of %s)"
           % (held.iloc[-1], held.index[-1].date()))
 
     # ---- figures --------------------------------------------------------
