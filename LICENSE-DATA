@@ -1,0 +1,58 @@
+Creative Commons Attribution 4.0 International (CC BY 4.0)
+
+Copyright (c) 2026 Marius Petit
+
+The assembled dataset in `data/`, the figures and tables in `output/`, and the
+provenance and audit documentation accompanying them are licensed under the
+Creative Commons Attribution 4.0 International License.
+
+You are free to share and adapt this material for any purpose, including
+commercially, provided you give appropriate credit, link to the licence, and
+indicate whether changes were made.
+
+Full legal code: https://creativecommons.org/licenses/by/4.0/legalcode
+Summary:         https://creativecommons.org/licenses/by/4.0/
+
+Suggested attribution
+---------------------
+
+  Petit, M. (2026). Global Equities Momentum: Dataset and Replication Code.
+  https://github.com/Petitmarius/Backtest_Strategies. CC BY 4.0.
+
+
+WHAT IS AND IS NOT LICENSED HERE
+================================
+
+This is a derived work, and the author can only license what is his.
+
+What is licensed
+----------------
+
+The contribution released under CC BY 4.0 is the assembly and everything built
+on top of it: the choice and sequencing of the source series, the splicing
+method and the junction dates recovered from the source file, the repair of the
+defective cash observations, the substitution of the T-bill leg, the
+segment-by-segment provenance mapping, the audit results, and the figures and
+tables derived from all of the above.
+
+What is NOT licensed
+--------------------
+
+The underlying market data is not the author's to license and is not licensed
+here. It remains subject to the terms of its respective providers:
+
+  - The historical core is `msci_all_gross.csv`, redistributed in the
+    repository github.com/alexjansenhome/GEM, which itself reproduces a
+    construction based on MSCI, Ibbotson/Morningstar and Bloomberg Barclays
+    index series.
+  - The extension to the present uses Yahoo Finance (^SP500TR, AGG, ACWX),
+    MSCI's public index endpoint, and the Kenneth French Data Library.
+
+Index names and marks -- MSCI, S&P 500, Bloomberg Barclays, Ibbotson, and
+others -- are the property of their respective owners. Nothing here grants any
+right in them.
+
+Anyone intending to redistribute the underlying vendor series, as opposed to
+this derived work, should satisfy themselves as to the terms attaching to those
+series. The build scripts in `src/` reconstruct the dataset from its sources,
+so the method can be reused without redistributing the source data at all.

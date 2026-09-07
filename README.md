@@ -82,3 +82,20 @@ See [`data/README.md`](data/README.md) for using the dataset on its own.
 | `data/` | Dataset and provenance documentation |
 | `output/` | Generated figures and tables |
 | `research_paper/` | LaTeX manuscript, bibliography and table fragments |
+
+## License
+
+Code and manuscript sources are released under the [MIT License](LICENSE). The
+dataset, figures, tables and provenance documentation are released under
+[CC BY 4.0](LICENSE-DATA) — reuse freely, with attribution.
+
+One limit is worth stating plainly: this is a derived work, and only the
+derivation is licensed here. The underlying market data belongs to its
+providers — MSCI, Ibbotson/Morningstar, Bloomberg Barclays, Yahoo Finance,
+the Kenneth French Data Library — and remains subject to their terms.
+[`LICENSE-DATA`](LICENSE-DATA) sets out the boundary in detail.
+
+Citing the dataset:
+
+> Petit, M. (2026). *Global Equities Momentum: Dataset and Replication Code.*
+> https://github.com/Petitmarius/Backtest_Strategies. CC BY 4.0.
