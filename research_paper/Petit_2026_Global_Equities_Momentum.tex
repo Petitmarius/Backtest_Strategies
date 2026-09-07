@@ -21,7 +21,7 @@
 \usepackage{natbib}
 \usepackage{xcolor}
 \usepackage{changepage}          % adjustwidth, for the abstract block
-\usepackage{placeins}            % FloatBarrier, see below
+\usepackage{float}               % the [H] specifier, see below
 \usepackage[hidelinks]{hyperref}
 
 % Document properties of the produced PDF. A reader who opens the file sees
@@ -44,18 +44,27 @@
 \setlength{\parindent}{0pt}
 \renewcommand{\arraystretch}{1.12}
 
-% Exhibits are read where they appear, so keep them close to their text.
-\renewcommand{\topfraction}{0.9}
-\renewcommand{\textfraction}{0.08}
-\renewcommand{\floatpagefraction}{0.8}
-
-% A float may drift within its own subsection but never past it. Without this
-% barrier a table discussed in one subsection lands in the next, which defeats
-% the point of reading each exhibit where it is discussed.
-\let\oldsubsection\subsection
-\renewcommand{\subsection}{\FloatBarrier\oldsubsection}
-\let\oldsection\section
-\renewcommand{\section}{\FloatBarrier\oldsection}
+% ---------------------------------------------------------------------
+% Exhibit placement. EVERY figure and table in this paper uses [H], which
+% means "here, and nowhere else": the float package switches off floating
+% altogether for that exhibit and typesets it at the exact point it appears
+% in the source.
+%
+% This is deliberate and it must not be relaxed back to [htbp] or [!ht].
+% Standard LaTeX float placement is a global optimisation over the whole
+% page, so an exhibit's position depends on how much text surrounds it,
+% which means editing one paragraph silently rearranges exhibits several
+% pages away. Worse, LaTeX keeps two independent queues, one for figures
+% and one for tables, so source order does not even guarantee that a table
+% written above a figure prints above it. Both effects were observed here.
+% \FloatBarrier and tuned \topfraction values only reduce the drift; they
+% cannot remove it, because the exhibit is still a float.
+%
+% The cost of [H] is real and accepted: an exhibit that does not fit in the
+% space left on the page forces a page break and leaves the foot of that
+% page short. That is the price of a document whose layout is a function of
+% the source alone, and can be checked once rather than after every edit.
+% ---------------------------------------------------------------------
 
 \begin{document}
 
@@ -220,7 +229,7 @@ absolute test acts as a gate: only when equities are trending up does the
 relative test get to choose between them. Figure~\ref{fig:rule} states the rule
 in full.
 
-\begin{figure}[htbp]
+\begin{figure}[H]
   \centering
   \includegraphics[width=\textwidth]{00_decision_rule.pdf}
   \caption{The Global Equities Momentum decision rule. Absolute momentum
@@ -283,7 +292,7 @@ reported here can be tied to an exact file.} Table~\ref{tab:provenance} records
 where each one comes from, and Figure~\ref{fig:provenance} shows the same
 information as a timeline.
 
-\begin{table}[!ht]
+\begin{table}[H]
   \centering
   \caption{Provenance of each series. Each leg is a chain of vendor series,
   not a single index.}
@@ -291,17 +300,7 @@ information as a timeline.
   \input{tables/t1_provenance}
 \end{table}
 
-% LaTeX keeps two independent float queues, one for tables and one for figures,
-% so source order does not constrain the order on the page: without this
-% barrier the full-width figure below gets placed a page ahead of the table
-% above it, and which of the two comes first flips whenever the surrounding
-% text is edited. The barrier forces the table out before the figure is
-% considered, which is the only way to fix their relative order. The table
-% above also drops the b and p options for the same reason: they are what let
-% it drift to the foot of a page or onto a float page of its own.
-\FloatBarrier
-
-\begin{figure}[htbp]
+\begin{figure}[H]
   \centering
   \includegraphics[width=\textwidth]{09_provenance.pdf}
   \caption{Provenance of each series over time. Dotted lines mark the months
@@ -350,15 +349,15 @@ identical.
 series and the S\&P 500 total return series measure the same thing; the 2013
 handover has no economic content.
 
-Table~\ref{tab:summary} gives the statistical properties of the four inputs
-before any strategy is applied to them.
-
-\begin{table}[htbp]
+\begin{table}[H]
   \centering
   \caption{Summary statistics of the four input series.}
   \label{tab:summary}
   \input{tables/t2_summary}
 \end{table}
+
+Table~\ref{tab:summary} gives the statistical properties of the four inputs
+before any strategy is applied to them.
 
 Two things in that table shape everything that follows. US equity outperformed
 non-US equity by 1.6 percentage points a year over the sample while being
@@ -420,14 +419,14 @@ against \$37{,}908 for the same \$100 left in the index --- close to seven
 times as much, from a strategy that traded 1.5 times a year on average.
 Table~\ref{tab:performance} gives the full comparison.
 
-\begin{figure}[htbp]
+\begin{figure}[H]
   \centering
   \includegraphics[width=\textwidth]{01_equity_curves.pdf}
   \caption{Growth of \$100, log scale, January 1971 to July 2026.}
   \label{fig:equity}
 \end{figure}
 
-\begin{figure}[htbp]
+\begin{figure}[H]
   \centering
   \includegraphics[width=\textwidth]{02_drawdowns.pdf}
   \caption{Drawdowns from prior peak.}
@@ -441,7 +440,7 @@ different events. The S\&P 500 has four episodes beyond 30\% --- 1973--74,
 deepest loss comes from somewhere else entirely, and we return to it in
 Section~\ref{sec:limitations}.
 
-\begin{table}[htbp]
+\begin{table}[H]
   \centering
   \caption{Performance, January 1971 to July 2026.}
   \label{tab:performance}
@@ -465,7 +464,7 @@ US equity when it beats T-bills and bonds otherwise, never touching the non-US
 leg; relative momentum alone always holds the stronger of the two equity
 markets, with no escape to bonds.
 
-\begin{table}[!ht]
+\begin{table}[H]
   \centering
   \caption{Decomposition: what each momentum filter contributes.}
   \label{tab:decomposition}
@@ -521,7 +520,7 @@ percentage point on every leg of the 45/28/27 global allocation benchmark that
 \citet{antonacci2018} uses for the same purpose, which suggests he calibrated
 his on the strategy's realised allocation as well.
 
-\begin{table}[!ht]
+\begin{table}[H]
   \centering
   \caption{Allocation effect versus timing effect.}
   \label{tab:timing}
@@ -547,7 +546,7 @@ therefore does its conventional job on risk --- 9.0 points of it --- while
 costing return; the switching supplies both the remaining 20.3 points of
 drawdown reduction and the entire return advantage.
 
-\begin{figure}[!ht]
+\begin{figure}[H]
   \centering
   \includegraphics[width=\textwidth]{03_allocation.pdf}
   \caption{Asset held by the rule over time. The rule holds one asset at a
@@ -600,13 +599,6 @@ tests how much of it survives perturbation of the one free parameter.
 
 \subsection{Behaviour through time}
 
-\begin{figure}[!ht]
-  \centering
-  \includegraphics[width=\textwidth]{06_annual_returns.pdf}
-  \caption{Calendar-year returns, GEM versus the S\&P 500.}
-  \label{fig:annual}
-\end{figure}
-
 The aggregate numbers conceal a strong pattern. Figure~\ref{fig:annual} plots
 calendar-year returns side by side, and the asymmetry is the whole story: GEM
 rarely beats the index in a good year, and rarely loses much in a bad one. In
@@ -614,7 +606,14 @@ the eleven calendar years the S\&P 500 declined, it averaged $-14.4$\% while
 GEM averaged $-0.4$\%. \textbf{The strategy earns its record by not
 participating in disasters, not by outperforming in booms.}
 
-\begin{figure}[!ht]
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{06_annual_returns.pdf}
+  \caption{Calendar-year returns, GEM versus the S\&P 500.}
+  \label{fig:annual}
+\end{figure}
+
+\begin{figure}[H]
   \centering
   \includegraphics[width=\textwidth]{04_rolling_excess.pdf}
   \caption{Rolling 36-month excess return of GEM over the S\&P 500.}
@@ -628,7 +627,7 @@ uncomfortable for anyone actually holding the strategy. The exhibit also makes
 the break after 2010 visible before we quantify it: the shaded area is almost
 entirely above zero until then, and almost entirely below it since.
 
-\begin{table}[!ht]
+\begin{table}[H]
   \centering
   \caption{Performance by decade.}
   \label{tab:decades}
@@ -652,7 +651,7 @@ its chosen setting is not a result.
 
 \subsection{The lookback window}
 
-\begin{figure}[!ht]
+\begin{figure}[H]
   \centering
   \includegraphics[width=0.86\textwidth]{05_lookback_sensitivity.pdf}
   \caption{Sensitivity to the momentum lookback window. The dashed line marks
@@ -666,7 +665,7 @@ window from three to twenty-four months. Across that range the CAGR runs from
 S\&P 500's 11.27\%. The strategy is therefore not fragile in the sense of
 working at one setting and failing at the others.
 
-\begin{table}[!ht]
+\begin{table}[H]
   \centering
   \caption{Robustness to the momentum lookback window.}
   \label{tab:lookback}
@@ -696,7 +695,7 @@ cost on every change. At 25 basis points the CAGR falls from 15.18\% to
 14.76\%, and even at 100 basis points --- far above anything an ETF investor
 would pay today --- 13.51\% remains well clear of the index.
 
-\begin{table}[!ht]
+\begin{table}[H]
   \centering
   \caption{Robustness to transaction costs.}
   \label{tab:costs}
@@ -834,7 +833,7 @@ is not a primary source, so it cannot simply be trusted. Our own repaired and
 extended version, together with the audit code described below, is published at
 \citet{petit2026data}.
 
-\begin{table}[!ht]
+\begin{table}[H]
   \centering
   \caption{The dataset against independent sources.}
   \label{tab:audit}

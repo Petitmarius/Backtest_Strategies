@@ -73,6 +73,24 @@ complète nécessaire.
 entre quotes, `\` y est réduit à `\`, ce qui casse silencieusement les fins de
 ligne des tableaux. Utiliser l'outil Write.
 
+**Tous les exhibits sont en `[H]`, jamais en `[htbp]` ni `[!ht]`.** Le placement
+flottant de LaTeX est une optimisation globale sur la page : la position d'une
+figure dépend de la quantité de texte autour, donc retoucher un paragraphe
+déplace des exhibits plusieurs pages plus loin. Pire, LaTeX tient **deux files
+séparées**, une pour les figures et une pour les tables, si bien que l'ordre du
+source ne garantit même pas qu'une table écrite au-dessus d'une figure
+s'imprime au-dessus d'elle. Les deux effets ont été observés ici. `\FloatBarrier`
+et les réglages de `\topfraction` réduisent la dérive sans la supprimer, parce
+que l'exhibit reste un flottant. Avec `[H]` (paquet `float`), **la position dans
+le PDF est fonction du seul source** et se vérifie une fois. Le prix accepté :
+un exhibit qui ne tient pas dans la place restante provoque un saut de page et
+laisse le bas de page court — mesuré à 6-8 lignes sur deux pages.
+
+Pour vérifier le placement sans ouvrir le PDF : `pypdf` et `pdftoppm` sont
+disponibles. Les numéros de page de chaque `\label` sont dans le `.aux` après
+`tectonic ... --keep-intermediates`, et le bas de la tache de texte page par
+page se mesure avec `extract_text(visitor_text=...)` en écartant le folio.
+
 **Le dataset est un artefact gelé, pas une sortie de build.** `--refresh`
 recopie verbatim les mois déjà publiés et n'ajoute que les nouveaux ; si une
 source renvoie une valeur différente pour un mois publié (au-delà de 1e-5 en
