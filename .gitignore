@@ -9,9 +9,9 @@ output/run_log.txt
 data/cache/
 
 # Sortie de compilation LaTeX
-paper/*.pdf
-paper/*.aux
-paper/*.log
-paper/*.bbl
-paper/*.blg
-paper/*.out
+research_paper/*.pdf
+research_paper/*.aux
+research_paper/*.log
+research_paper/*.bbl
+research_paper/*.blg
+research_paper/*.out

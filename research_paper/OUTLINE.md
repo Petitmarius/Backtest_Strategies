@@ -178,7 +178,7 @@ announced well.
 
 1. ~~Vector figure export~~ done — every figure now writes PNG and PDF
 2. ~~Figures 1, 2, 5 and Table 2~~ done — `src/paper_exhibits.py`
-3. ~~LaTeX skeleton and bibliography~~ done — Tectonic, `paper/Petit_2026_Global_Equities_Momentum.tex`
+3. ~~LaTeX skeleton and bibliography~~ done — Tectonic, `research_paper/Petit_2026_Global_Equities_Momentum.tex`
 4. ~~§3 Data and methodology, §2 The strategy~~ done
 5. ~~§4 Results, §5 Robustness~~ done
 6. ~~§6 Limitations, §7 Conclusion~~ done

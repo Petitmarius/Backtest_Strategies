@@ -24,9 +24,9 @@ src/build_dataset.py     Assemble data/gem_dataset.csv + data/SOURCES.md
 src/validate_dataset.py  Audit indépendant -> data/VALIDATION.md
 src/gem_backtest.py      Backtest, tables et figures
 src/paper_exhibits.py    Exhibits propres au papier (arbre de décision, provenance, annuels)
-paper/references.bib     Bibliographie, chaque entrée vérifiée à la source
-paper/OUTLINE.md         Plan arrêté du papier
-paper/Petit_2026_Global_Equities_Momentum.tex   Manuscrit LaTeX (le nom du
+research_paper/references.bib     Bibliographie, chaque entrée vérifiée à la source
+research_paper/OUTLINE.md         Plan arrêté du papier
+research_paper/Petit_2026_Global_Equities_Momentum.tex   Manuscrit LaTeX (le nom du
                          .tex fixe celui du PDF produit)
 
 data/gem_dataset.csv          Jeu maître FORMAT LARGE, 4 séries — entrée du backtest (généré)
@@ -56,7 +56,7 @@ python src/gem_backtest.py              # backtest + figures + tables (hors lign
 python src/paper_exhibits.py            # exhibits du papier (hors ligne)
 python src/make_tables.py               # tableaux LaTeX depuis les CSV calculés
 python src/check_paper_numbers.py       # contrôle les chiffres du texte
-tectonic -X compile paper/Petit_2026_Global_Equities_Momentum.tex   # compile le manuscrit
+tectonic -X compile research_paper/Petit_2026_Global_Equities_Momentum.tex   # compile le manuscrit
 ```
 
 **Aucun chiffre du papier n'est saisi à la main dans un tableau ou une figure**

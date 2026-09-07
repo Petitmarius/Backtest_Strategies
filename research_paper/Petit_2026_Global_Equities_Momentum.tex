@@ -1,6 +1,6 @@
 % Global Equities Momentum -- replication and decomposition
 %
-% Build:  tectonic -X compile paper/gem.tex
+% Build:  tectonic -X compile research_paper/Petit_2026_Global_Equities_Momentum.tex
 % Figures come as vector PDFs from ../output/figures and tables as generated
 % fragments from ./tables, so the paper always shows what the current code
 % produces. Never edit a figure or a table by hand: change the code and re-run
@@ -295,6 +295,14 @@ information as a timeline.
   \label{tab:provenance}
   \input{tables/t1_provenance}
 \end{table}
+
+% LaTeX keeps two independent float queues, one for tables and one for figures,
+% so source order does not constrain the order on the page: without this
+% barrier the full-width figure below gets placed a page ahead of the table
+% above it, and which of the two comes first flips whenever the surrounding
+% text is edited. The barrier forces the table out before the figure is
+% considered, which is the only way to fix their relative order.
+\FloatBarrier
 
 \begin{figure}[htbp]
   \centering

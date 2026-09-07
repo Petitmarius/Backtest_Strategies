@@ -6,7 +6,7 @@ typed by hand. Each fragment is a bare tabular, so the manuscript keeps control 
 placement, caption and label.
 
 Run:  python src/make_tables.py
-Out:  paper/tables/*.tex
+Out:  research_paper/tables/*.tex
 """
 
 from __future__ import annotations
@@ -26,7 +26,7 @@ from data_sources import GEM_SEGMENTS  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TAB_DIR = os.path.join(ROOT, "output", "tables")
-OUT_DIR = os.path.join(ROOT, "paper", "tables")
+OUT_DIR = os.path.join(ROOT, "research_paper", "tables")
 
 # Rows that are percentages in the computed CSVs and must be printed as such.
 PCT_ROWS = {"CAGR", "Volatility", "Max drawdown", "Best month", "Worst month",
