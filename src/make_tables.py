@@ -2,7 +2,7 @@
 Turn the computed CSV tables into LaTeX fragments for the paper.
 
 Same principle as the figures: the manuscript never contains a number that was
-typed by hand. Each fragment is a bare tabular, so gem.tex keeps control of
+typed by hand. Each fragment is a bare tabular, so the manuscript keeps control of
 placement, caption and label.
 
 Run:  python src/make_tables.py

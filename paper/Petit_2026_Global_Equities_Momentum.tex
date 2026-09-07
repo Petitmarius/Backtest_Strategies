@@ -24,6 +24,19 @@
 \usepackage{placeins}            % FloatBarrier, see below
 \usepackage[hidelinks]{hyperref}
 
+% Document properties of the produced PDF. A reader who opens the file sees
+% these in the viewer's title bar, and reference managers read them on import,
+% so they must be kept in step with the title page above.
+\hypersetup{
+  pdftitle={Global Equities Momentum, 1971-2026: A Replication of Antonacci's
+            Dual Momentum and a Decomposition of Its Returns},
+  pdfauthor={Marius Petit},
+  pdfsubject={Tactical asset allocation, dual momentum, replication},
+  pdfkeywords={dual momentum, global equities momentum, absolute momentum,
+               relative momentum, tactical asset allocation, market timing,
+               replication}
+}
+
 \graphicspath{{../output/figures/}}
 \bibliographystyle{plainnat}
 
@@ -62,8 +75,10 @@
   \vspace{0.2em}
   {\Large\bfseries and a Decomposition of Its Returns\par}
 
-  \vspace{2.0em}
-  {\large Marius Petit\footnotemark[1]\par}
+  \vspace{2.2em}
+  % One step up from the running text, one step below the subtitle, and set
+  % in regular weight so it does not compete with the bold lines above it.
+  {\Large Marius Petit\footnotemark[1]\par}
 
   \vspace{1.6em}
   {\normalsize \today\par}
@@ -127,10 +142,17 @@ drawdowns. The rule is simple enough to run in a spreadsheet, trades roughly
 once or twice a year, and has been widely adopted.
 
 The strategy's performance has been documented extensively, by its author and
-by others. This paper asks a narrower question: \emph{which part of the rule
-produces that performance?} GEM combines two momentum filters and moves between
-three assets, and those components can be separated and priced individually. We
-do so, and find that the answer is not the one a reader would naturally assume.
+by others. This paper takes that record as its starting point and asks three
+questions of it. \emph{Which part of the rule produces the performance?} GEM
+combines two momentum filters and moves between three assets, and those
+components can be separated and priced individually. \emph{How much of the
+result is the basket of assets rather than the decision to move between them?}
+The rule diversifies and it times, and the two can be measured against each
+other. \emph{And how much of it survives the choices the backtest had to
+make} --- the length of the lookback window, the cost of trading, and the
+sixteen years that have passed since the rule was published? The three answers
+do not point the same way, and none of them is quite the one a reader would
+naturally assume.
 
 We replicate the strategy over 1971--2026 and reproduce the headline result
 closely: 15.18\% a year against 11.27\% for the S\&P 500, a maximum drawdown of

@@ -8,8 +8,8 @@ ones. Nothing in the build catches that, because LaTeX is perfectly happy to
 typeset a stale number.
 
 This script recomputes each claim from data/gem_dataset.csv and compares it
-with what paper/gem.tex says. Every entry below names the section it appears
-in, so a failure points straight at the sentence to fix.
+with what the manuscript says. Every entry below names the section it
+appears in, so a failure points straight at the sentence to fix.
 
 Run:  python src/check_paper_numbers.py     (exit code 1 on any mismatch)
 """
@@ -223,7 +223,7 @@ def main():
         checks.append(("5.2", "CAGR at %d bps cost" % bps,
                        cagr(r) * 100, expected, 0.02))
 
-    print("Checking %d numbers asserted in paper/gem.tex\n" % len(checks))
+    print("Checking %d numbers asserted in the manuscript\n" % len(checks))
     failures = []
     for section, claim, computed, stated, tol in checks:
         ok = abs(float(computed) - float(stated)) <= tol
